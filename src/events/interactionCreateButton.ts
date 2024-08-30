@@ -13,8 +13,6 @@ const event: Event = {
         if (interaction.customId.startsWith('learn-')) {
             const game = interaction.customId.split('-')[1];
             const step = parseInt(interaction.customId.split('-')[2]) + 1;
-
-            console.log('calling generate with', game, step);
             await generate(interaction, { game, step });
             return;
         }

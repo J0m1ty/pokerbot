@@ -65,7 +65,6 @@ const command: Command = {
         ),
     async execute(interaction) {
         const game = interaction.options.getSubcommand();
-        console.log('calling generate with', game, 0);
         await generate(interaction, { game, step: 0 });
     }
 }
