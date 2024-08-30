@@ -32,7 +32,8 @@ const event: Event = {
         if (!response) return;
 
         client.db.table('pending').set<Verification>(member.id, { 
-            step: "email", 
+            step: 'email', 
+            email: '',
             token: randomBytes(32).toString('hex')
         });
     }

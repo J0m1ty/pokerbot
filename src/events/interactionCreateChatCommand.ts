@@ -1,11 +1,11 @@
-import { BaseInteraction, ChannelType, PermissionFlagsBits } from "discord.js";
+import { PermissionFlagsBits } from "discord.js";
 import { Event } from "../structures.js";
 import { client } from "../client.js";
-import { DISCORD_MEMBERSHIP_ROLE_ID, DISCORD_VERIFIED_ROLE_ID, GUILD_ID } from "../config.js";
+import { DISCORD_MEMBERSHIP_ROLE_ID, GUILD_ID } from "../config.js";
 
 const event: Event = {
     name: 'interactionCreate',
-    async execute(interaction: BaseInteraction) {
+    async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
 
         const command = client.commands.get(interaction.commandName);

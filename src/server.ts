@@ -32,8 +32,9 @@ app.get('/verify', async (req, res) => {
     const response = await member.send({ embeds: [ rules() ], components: [ row ] }).catch(() => {});
     if (!response) return res.status(500).send('Internal Server Error');
 
-    await client.db.table('pending').set<Verification>(id, { 
+    await client.db.table('pending').set<Verification>(id, {
         step: "rules", 
+        email: verification.email,
         buttonId
     });
     

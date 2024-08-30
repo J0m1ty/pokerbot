@@ -1,14 +1,20 @@
-import { AutocompleteFocusedOption, AutocompleteInteraction, ChatInputCommandInteraction, ClientEvents, SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
+import { AutocompleteFocusedOption, AutocompleteInteraction, ChatInputCommandInteraction, ClientEvents, EmbedBuilder, SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
 
-export type Verification = {
+export type Verification = { email: string } & ({
     step: 'email';
     token: string;
 } | {
     step: 'rules';
     buttonId: string;
-}
+});
 
 export type Scope = 'dm' | 'guild' | (string & {});
+
+export type Step = {
+    embed: EmbedBuilder;
+    terms: Record<string, string>;
+    last: boolean;
+}
 
 export interface Command {
     scope: Scope;

@@ -12,7 +12,12 @@ const event: Event = {
             const verification = await client.db.table('pending').get<Verification>(message.author.id);
             if (!verification || verification.step == "rules") return;
             
-            const success = await sendEmail(message.content, 'RIT Poker Club Verification', `Hello, ${message.author.username}! Click the following link to verify your email address: https://jomity.net/verify?id=${message.author.id}&token=${verification.token}`);
+            const success = await sendEmail(message.content, 'RIT Poker Club Verification', `Hello, ${message.author.username}! Click the following link to verify your email address: https://jomity.net/verify?id=${message.author.id}&token=${verification.token}\nIf you did not request this email, please ignore it.`);
+
+            await client.db.table('pending').set<Verification>(message.author.id, {
+                ...verification,
+                email: message.content
+            });
 
             await message.author.send({
                 content: success ? 'Email sent! Check your spam folder.' : 'There was an error sending the verification email. Please try again later.'

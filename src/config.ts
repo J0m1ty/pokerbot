@@ -17,3 +17,5 @@ export const DISCORD_MEMBERSHIP_ROLE_ID = process.env.DISCORD_MEMBERSHIP_ROLE_ID
 export const THUMBNAIL_URL = process.env.THUMBNAIL_URL ?? '';
 export const GUILD_ICON_URL = process.env.GUILD_ICON_URL ?? '';
 export const CLIENT_AVATAR_URL = process.env.CLIENT_AVATAR_URL ?? '';
+export const TEXASHOLDEM_URL = process.env.TEXASHOLDEM_URL ?? '';
+export const BLACKJACK_URL = process.env.BLACKJACK_URL ?? '';
