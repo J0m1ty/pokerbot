@@ -1,0 +1,5 @@
+/.env
+/dist
+/json.sqlite
+/node_modules
+/pnpm-lock.yaml
