@@ -5,7 +5,7 @@ const command: Command = {
     scope: 'dm',
     data: new SlashCommandBuilder()
         .setName('ping')
-        .setDescription('Replies with Pong!'),
+        .setDescription('Check the bot\'s latency'),
     async execute(interaction) {
         let time = Date.now();
         await interaction.reply({ content: 'Pinging...', ephemeral: true });

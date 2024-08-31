@@ -7,7 +7,7 @@ const command: Command = {
     scope: 'guild',
     data: new SlashCommandBuilder()
         .setName('send')
-        .setDescription('Send a message to the current channel.')
+        .setDescription('Send a message to the current channel')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addSubcommand(subcommand =>
             subcommand

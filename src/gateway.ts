@@ -10,7 +10,11 @@ export const load = async (dir: string, fn: (ex: any) => void) => {
 
     const modules = files.map(async (file) => {
         const { default: module } = await import(join(__dirname, dir, file));
-        fn(module);
+        try {
+            fn(module);
+        } catch (e) {
+            console.log("Error loading:", file);
+        }
     });
 
     return Promise.all(modules);

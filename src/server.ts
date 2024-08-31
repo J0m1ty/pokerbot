@@ -41,11 +41,9 @@ app.get('/verify', async (req, res) => {
     res.send('Email verified! You can now close this tab. Please check your DMs for the next steps.');
 });
 
-const server = createServer(app);
-
-export const listen = () => {
+export const server = () => {
     return new Promise<void>(resolve => {
-        server.listen(PORT, () => {
+        createServer(app).listen(PORT, () => {
             console.log(`Server listening on port :${PORT}`);
             resolve();
         });
