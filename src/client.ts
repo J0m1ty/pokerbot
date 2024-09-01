@@ -2,6 +2,7 @@ import { Client as BaseClient, ClientOptions, Collection, GatewayIntentBits, Par
 import { Command } from "./structures.js";
 import { QuickDB } from "quick.db";
 import { GUILD_ID } from "./config/discord.js";
+import { Canvas, CanvasRenderingContext2D } from "skia-canvas";
 
 export class Client extends BaseClient {
     commands: Collection<string, Command> = new Collection();
@@ -9,6 +10,13 @@ export class Client extends BaseClient {
 
     constructor(options: ClientOptions) {
         super(options);
+    }
+
+    async canvas(width: number, height: number, fn: ({ ctx, width, height }: { ctx: CanvasRenderingContext2D, width: number, height: number }) => void) {
+        const canvas = new Canvas(width, height);
+        const ctx = canvas.getContext('2d');
+        fn({ ctx, width, height });
+        return { name: 'image.png', attachment: await canvas.toBuffer('png', { density: 2 } )};
     }
 
     async guild() {
@@ -43,5 +51,5 @@ export const client = new Client({
         GatewayIntentBits.DirectMessages,
         GatewayIntentBits.DirectMessageReactions
     ],
-    partials: [ Partials.Channel ]
+    partials: [Partials.Channel]
 });
