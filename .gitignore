@@ -1,4 +1,4 @@
-/.env
+/src/config
 /dist
 /json.sqlite
 /node_modules

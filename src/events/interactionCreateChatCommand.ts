@@ -1,7 +1,7 @@
 import { PermissionFlagsBits } from "discord.js";
 import { Event } from "../structures.js";
 import { client } from "../client.js";
-import { DISCORD_MEMBERSHIP_ROLE_ID, GUILD_ID } from "../config.js";
+import { GUILD_ID, ROLE } from "../config/discord.js";
 
 const event: Event = {
     name: 'interactionCreate',
@@ -20,7 +20,7 @@ const event: Event = {
             const member = await client.member(interaction.user.id);
             if (!member) return;
 
-            const membership = await client.role(DISCORD_MEMBERSHIP_ROLE_ID);
+            const membership = await client.role(ROLE.MEMBERSHIP);
             if (!membership) return;
 
             if (!member.roles.cache.has(membership.id) && !member.permissions.has(PermissionFlagsBits.Administrator)) {

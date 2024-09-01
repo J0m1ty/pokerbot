@@ -1,10 +1,10 @@
 import express from "express";
 import { createServer } from "http";
-import { ACK_TIMEOUT, DISCORD_VERIFIED_ROLE_ID, EMBED_COLOR, GUILD_ID, PORT } from "./config.js";
 import { client } from "./client.js";
 import { Verification } from "./structures.js";
-import { ActionRowBuilder, APIMessageActionRowComponent, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, MessageActionRowComponentBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle,MessageActionRowComponentBuilder } from "discord.js";
 import { rules } from "./embeds/rules.js";
+import { PORT } from "./config/constants.js";
 
 const app = express();
 

@@ -1,7 +1,7 @@
 import { Client as BaseClient, ClientOptions, Collection, GatewayIntentBits, Partials } from "discord.js";
 import { Command } from "./structures.js";
 import { QuickDB } from "quick.db";
-import { GUILD_ID } from "./config.js";
+import { GUILD_ID } from "./config/discord.js";
 
 export class Client extends BaseClient {
     commands: Collection<string, Command> = new Collection();

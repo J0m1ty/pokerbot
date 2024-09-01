@@ -1,9 +1,7 @@
 import { Event, Verification } from "../structures.js";
 import { client } from "../client.js";
-import { DISCORD_VERIFIED_ROLE_ID } from "../config.js";
-import { th } from "../embeds/texasholdem.js";
-import { bj } from "../embeds/blackjack.js";
 import { generate } from "../commands/learn.js";
+import { ROLE } from "../config/discord.js";
 
 const event: Event = {
     name: 'interactionCreate',
@@ -27,7 +25,7 @@ const event: Event = {
             const member = await client.member(interaction.user.id);
             if (!member) return;
 
-            const role = await client.role(DISCORD_VERIFIED_ROLE_ID);
+            const role = await client.role(ROLE.VERIFIED);
             if (!role) return;
 
             let success = true;

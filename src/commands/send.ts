@@ -1,7 +1,7 @@
 import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder, SlashCommandSubcommandBuilder, TextChannel } from "discord.js";
 import { Command } from "../structures.js";
 import { client } from "../client.js";
-import { EMBED_COLOR } from "../config.js";
+import { EMBED_COLOR } from "../config/constants.js";
 
 const command: Command = {
     scope: 'guild',

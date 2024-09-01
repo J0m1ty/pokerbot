@@ -1,9 +1,9 @@
 import { Event, Verification } from "../structures.js";
-import { EmbedBuilder, GuildMember } from "discord.js";
+import { GuildMember } from "discord.js";
 import { randomBytes } from 'crypto';
 import { client } from "../client.js";
-import { DISCORD_VERIFIED_ROLE_ID, EMBED_COLOR } from "../config.js";
 import { welcome } from "../embeds/welcome.js";
+import { ROLE } from "../config/discord.js";
 
 const event: Event = {
     name: 'guildMemberAdd',
@@ -13,13 +13,13 @@ const event: Event = {
         const list = await client.db.get<string[]>('verified') ?? [];
 
         const previous = list.includes(member.id);
-        const current = member.roles.cache.has(DISCORD_VERIFIED_ROLE_ID);
+        const current = member.roles.cache.has(ROLE.VERIFIED);
 
         if (previous || current) {
             await member.send('You are already verified. Welcome back!').catch(() => {});
 
             if (previous && !current) {
-                const role = await client.role(DISCORD_VERIFIED_ROLE_ID);
+                const role = await client.role(ROLE.VERIFIED);
                 if (!role) return;
 
                 await member.roles.add(role).catch(() => {});

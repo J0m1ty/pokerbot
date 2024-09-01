@@ -1,5 +1,6 @@
 import { EmbedBuilder } from "discord.js";
-import { EMBED_COLOR, GUILD_ICON_URL, THUMBNAIL_URL } from "../config.js";
+import { EMBED_COLOR } from "../config/constants.js";
+import { GUILD_ICON_URL, THUMBNAIL_URL } from "../config/images.js";
 
 export const welcome = (username: string) => new EmbedBuilder()
     .setAuthor({

@@ -1,15 +1,15 @@
 import { createTransport } from 'nodemailer';
-import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } from './config.js';
 import { google } from 'googleapis';
+import { CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN } from './config/google.js';
 
 export const oauth2Client = new google.auth.OAuth2(
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
+    CLIENT_ID,
+    CLIENT_SECRET,
     'https://developers.google.com/oauthplayground'
 );
 
 oauth2Client.setCredentials({
-    refresh_token: GOOGLE_REFRESH_TOKEN,
+    refresh_token: REFRESH_TOKEN,
     scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify'
 });
 
@@ -25,9 +25,9 @@ const createTransporter = async () => {
         auth: {
             type: 'OAuth2',
             user: 'jss5874@g.rit.edu',
-            clientId: GOOGLE_CLIENT_ID,
-            clientSecret: GOOGLE_CLIENT_SECRET,
-            refreshToken: GOOGLE_REFRESH_TOKEN,
+            clientId: CLIENT_ID,
+            clientSecret: CLIENT_SECRET,
+            refreshToken: REFRESH_TOKEN,
             accessToken: token,
         }
     });

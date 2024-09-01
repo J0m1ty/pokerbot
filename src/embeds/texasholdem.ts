@@ -1,6 +1,7 @@
 import { EmbedBuilder } from "discord.js";
-import { EMBED_COLOR, TEXASHOLDEM_URL } from "../config.js";
+import { EMBED_COLOR } from "../config/constants.js";
 import { Step } from "../structures.js";
+import { TEXASHOLDEM_URL } from "../config/images.js";
 
 export const th = (step: number): Step => step == 0 ? {
     embed: new EmbedBuilder()

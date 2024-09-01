@@ -1,7 +1,7 @@
 import { REST, Routes } from 'discord.js';
-import { CLIENT_ID, GUILD_ID, TOKEN } from './config.js';
 import { Command, Scope } from './structures.js';
 import { load } from './gateway.js';
+import { CLIENT_ID, GUILD_ID, TOKEN } from './config/discord.js';
 
 const scopes: { [key in Scope]: any[] } = { dm: [], guild: [] };
 

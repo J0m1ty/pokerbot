@@ -8,6 +8,11 @@ export type Verification = { email: string } & ({
     buttonId: string;
 });
 
+export type Account = {
+    claimed: number;
+    balance: number;
+}
+
 export type Scope = 'dm' | 'guild' | (string & {});
 
 export type Step = {
