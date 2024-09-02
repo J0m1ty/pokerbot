@@ -76,7 +76,7 @@ const command: Command = {
 
             quad(ctx, tx - 280, ty, tx + 280, ty, tx + 280 - 25, height, tx - 280 + 25, height, '#5C4033');
 
-            ellipse(ctx, tx, ty - 5, 280, 90, '#5C4033');
+            ellipse(ctx, tx, ty - 5, 280, 90, '#17e605');
 
             ellipse(ctx, tx, ty + 5, 280, 90, '#134f12');
 
