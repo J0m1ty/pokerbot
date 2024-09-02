@@ -215,7 +215,7 @@ const command: Command = {
             }
             ctx.restore();
 
-            const image = await loadImage('/home/pokerbot/main/images/white_chip.png');
+            const image = await loadImage('./images/white_chip.png');
 
             ctx.drawImage(image, 10, 10, 30, 30);
             ctx.font = 'bold 24px Arial';
