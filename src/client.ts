@@ -12,10 +12,10 @@ export class Client extends BaseClient {
         super(options);
     }
 
-    async canvas(width: number, height: number, fn: ({ ctx, width, height }: { ctx: CanvasRenderingContext2D, width: number, height: number }) => void) {
+    async canvas(width: number, height: number, fn: ({ ctx, width, height }: { ctx: CanvasRenderingContext2D, width: number, height: number }) => void | Promise<void>) {
         const canvas = new Canvas(width, height);
         const ctx = canvas.getContext('2d');
-        fn({ ctx, width, height });
+        await fn({ ctx, width, height });
         return { name: 'image.png', attachment: await canvas.toBuffer('png', { density: 2 } )};
     }
 
