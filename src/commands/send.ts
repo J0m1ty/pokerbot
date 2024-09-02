@@ -1,7 +1,6 @@
 import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder, SlashCommandSubcommandBuilder, TextChannel } from "discord.js";
 import { Command } from "../structures.js";
 import { client } from "../client.js";
-import { EMBED_COLOR } from "../config/discord.js";
 
 const command: Command = {
     scope: 'guild',
@@ -41,7 +40,7 @@ const command: Command = {
                 const description = interaction.options.getString('description');
                 const image = interaction.options.getString('image');
 
-                const embed = new EmbedBuilder().setColor(EMBED_COLOR);
+                const embed = new EmbedBuilder().setColor(Number(process.env.COLOR));
 
                 if (title) embed.setTitle(title);
                 

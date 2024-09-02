@@ -1,7 +1,7 @@
 import { REST, Routes } from 'discord.js';
 import { Command, Scope } from './structures.js';
 import { load } from './gateway.js';
-import { CLIENT_ID, GUILD_ID, TOKEN } from './config/discord.js';
+import 'dotenv/config';
 
 const scopes: { [key in Scope]?: any[] } = { global: [], guild: [] };
 
@@ -10,14 +10,14 @@ await load('commands', (command: Command) => {
     scopes[scope] = [ ...(scopes[scope] ?? []), command.data.toJSON() ];
 });
 
-const rest = new REST({ version: '10' }).setToken(TOKEN);
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN ?? '');
 
 for (const scope in scopes) {
     try {
         process.stdout.write(`Refreshing ${scopes[scope]!.length} ${scope} application (/) commands...`);
 
         const data = await rest.put(
-            scope === 'guild' ? Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID) : Routes.applicationCommands(CLIENT_ID),
+            scope === 'guild' ? Routes.applicationGuildCommands(process.env.CLIENT_ID ?? '', process.env.GUILD_ID ?? '') : Routes.applicationCommands(process.env.CLIENT_ID ?? ''),
             { body: scopes[scope] }
         );
 
@@ -27,6 +27,8 @@ for (const scope in scopes) {
         process.stdout.cursorTo(0);
         console.log(`Successfully refreshed ${(data as { length: number }).length} ${scope} application (/) commands.`);
     } catch {
+        process.stdout.clearLine(0);
+        process.stdout.cursorTo(0);
         console.error(`Failed to refresh ${scope} application (/) commands.`);
     }
 }

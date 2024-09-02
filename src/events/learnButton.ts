@@ -1,7 +1,5 @@
-import { Event, Verification } from "../structures.js";
-import { client } from "../client.js";
+import { Event } from "../structures.js";
 import { generate } from "../commands/learn.js";
-import { ROLE } from "../config/discord.js";
 
 const event: Event = {
     name: 'interactionCreate',

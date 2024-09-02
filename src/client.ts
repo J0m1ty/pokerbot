@@ -1,7 +1,6 @@
 import { Client as BaseClient, ClientOptions, Collection, GatewayIntentBits, Partials } from "discord.js";
 import { Account, Command } from "./structures.js";
 import { QuickDB } from "quick.db";
-import { GUILD_ID } from "./config/discord.js";
 import { Canvas, CanvasRenderingContext2D } from "skia-canvas";
 
 export class Client extends BaseClient {
@@ -24,7 +23,8 @@ export class Client extends BaseClient {
     }
 
     async guild() {
-        return this.guilds.cache.get(GUILD_ID) ?? await this.guilds.fetch(GUILD_ID).catch(() => null);
+        const id = process.env.GUILD_ID ?? '';
+        return this.guilds.cache.get(id) ?? await this.guilds.fetch(id).catch(() => null);
     }
 
     async member(id: string) {

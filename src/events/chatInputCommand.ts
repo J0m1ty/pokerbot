@@ -1,7 +1,6 @@
 import { PermissionFlagsBits } from "discord.js";
 import { Event } from "../structures.js";
 import { client } from "../client.js";
-import { GUILD_ID, ROLE } from "../config/discord.js";
 
 const event: Event = {
     name: 'interactionCreate',
@@ -16,7 +15,7 @@ const event: Event = {
             return;
         }
 
-        if (command.scope == "guild" && interaction.guildId != GUILD_ID) {
+        if (command.scope == "guild" && interaction.guildId != process.env.GUILD_ID) {
             await interaction.reply({ content: 'This command is only available within the RIT Poker Club server.', ephemeral: true }).catch(() => {});
             return;
         }
@@ -25,7 +24,7 @@ const event: Event = {
             const member = await client.member(interaction.user.id);
             if (!member) return;
 
-            const membership = await client.role(ROLE.MEMBERSHIP);
+            const membership = await client.role(process.env.MEMBERSHIP_ROLE_ID ?? '');
             if (!membership) return;
 
             if (!member.roles.cache.has(membership.id) && !member.permissions.has(PermissionFlagsBits.Administrator)) {

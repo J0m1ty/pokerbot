@@ -2,7 +2,7 @@ import { Command, Event } from "./structures.js";
 import { load } from "./gateway.js";
 import { server } from "./server.js";
 import { client } from "./client.js";
-import { TOKEN } from "./config/discord.js";
+import 'dotenv/config';
 
 await server();
 
@@ -18,4 +18,4 @@ await load('events', (event: Event) => {
 
 await client.db.init();
 
-await client.login(TOKEN);
+await client.login(process.env.TOKEN ?? '');

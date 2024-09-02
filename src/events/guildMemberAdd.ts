@@ -3,7 +3,6 @@ import { GuildMember } from "discord.js";
 import { randomBytes } from 'crypto';
 import { client } from "../client.js";
 import { welcome } from "../embeds/welcome.js";
-import { ROLE } from "../config/discord.js";
 
 const event: Event = {
     name: 'guildMemberAdd',
@@ -13,13 +12,13 @@ const event: Event = {
         const list = await client.db.get<string[]>('verified') ?? [];
 
         const previous = list.includes(member.id);
-        const current = member.roles.cache.has(ROLE.VERIFIED);
+        const current = member.roles.cache.has(process.env.VERIFIED_ROLE_ID ?? '');
 
         if (previous || current) {
             await member.send('You are already verified. Welcome back!').catch(() => {});
 
             if (previous && !current) {
-                const role = await client.role(ROLE.VERIFIED);
+                const role = await client.role(process.env.VERIFIED_ROLE_ID ?? '');
                 if (!role) return;
 
                 await member.roles.add(role).catch(() => {});

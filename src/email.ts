@@ -1,6 +1,9 @@
 import { createTransport } from 'nodemailer';
 import { google } from 'googleapis';
-import { CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN } from './config/google.js';
+
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? '';
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? '';
+const REFRESH_TOKEN = process.env.REFRESH_TOKEN ?? '';
 
 export const oauth2Client = new google.auth.OAuth2(
     CLIENT_ID,

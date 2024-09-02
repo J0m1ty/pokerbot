@@ -2,7 +2,6 @@ import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import { Account, Command } from "../structures.js";
 import { client } from "../client.js";
 import { CanvasRenderingContext2D, loadImage } from "skia-canvas";
-import { EMBED_COLOR } from "../config/discord.js";
 import { chips } from "../data/chips.js";
 import { clamp, map } from "../utils.js";
 
@@ -70,7 +69,7 @@ const command: Command = {
         const stacks = distribute(account.balance);
 
         const image = await client.canvas(600, 200, async ({ ctx, width, height }) => {
-            rect(ctx, 0, 0, width, height, `#${EMBED_COLOR.toString(16).padStart(6, '0')}`);
+            rect(ctx, 0, 0, width, height, `#${process.env.COLOR}`);
 
             const tx = width / 2, ty = height * 0.65;
 
@@ -224,7 +223,7 @@ const command: Command = {
         });
 
         const embed = new EmbedBuilder()
-            .setColor(EMBED_COLOR)
+            .setColor(Number(process.env.COLOR))
             .setTitle(`${interaction.user.displayName}'s Chips`)
             .setImage('attachment://image.png');
 

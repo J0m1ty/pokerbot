@@ -1,8 +1,7 @@
 import { EmbedBuilder } from "discord.js";
-import { EMBED_COLOR } from "../config/discord.js";
 
 export const rules = () => new EmbedBuilder()
-    .setColor(EMBED_COLOR)
+    .setColor(Number(process.env.COLOR))
     .setTitle('RIT Poker Club Rules')
     .setDescription('Please follow the rules to ensure a positive community experience.')
     .addFields(
