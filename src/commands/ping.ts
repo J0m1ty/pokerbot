@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from "discord.js";
 import { Command } from "../structures.js";
 
 const command: Command = {
-    scope: 'dm',
+    scope: 'global',
     data: new SlashCommandBuilder()
         .setName('ping')
         .setDescription('Check the bot\'s latency'),

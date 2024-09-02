@@ -1,12 +1,12 @@
 import { EmbedBuilder } from "discord.js";
-import { EMBED_COLOR } from "../config/constants.js";
+import { EMBED_COLOR } from "../config/discord.js";
 import { Step } from "../structures.js";
-import { TEXASHOLDEM_URL } from "../config/images.js";
+import { urls } from "../data/urls.js";
 
 export const th = (step: number): Step => step == 0 ? {
     embed: new EmbedBuilder()
         .setColor(EMBED_COLOR)
-        .setThumbnail(TEXASHOLDEM_URL)
+        .setThumbnail(urls.texasHoldem)
         .setTitle('Texas Hold\'em: Introduction & Goal')
         .setDescription('Welcome to Texas Hold\'em, one of the most popular forms of poker! The goal of Texas Hold\'em is simple: win chips by forming the best possible 5-card hand, or by convincing other players to fold, leaving you as the last one standing.'),
     terms: {
@@ -18,7 +18,7 @@ export const th = (step: number): Step => step == 0 ? {
 } : step == 1 ? {
     embed: new EmbedBuilder()
         .setColor(EMBED_COLOR)
-        .setThumbnail(TEXASHOLDEM_URL)
+        .setThumbnail(urls.texasHoldem)
         .setTitle('Texas Hold\'em: The Basics & Setup')
         .setDescription('In Texas Hold\'em, each player is dealt two private cards, known as **hole cards**. Five community cards are then dealt face up in three stages: **the Flop** (3 cards), **the Turn** (1 card), and **the River** (1 card). Players use these cards to form the best possible hand.'),
     terms: {
@@ -31,7 +31,7 @@ export const th = (step: number): Step => step == 0 ? {
 } : step == 2 ? {
     embed: new EmbedBuilder()
         .setColor(EMBED_COLOR)
-        .setThumbnail(TEXASHOLDEM_URL)
+        .setThumbnail(urls.texasHoldem)
         .setTitle('Texas Hold\'em: How to Play a Round')
         .setDescription('Each round of Texas Hold\'em consists of four stages: **Pre-flop**, **Flop**, **Turn**, and **River**. Betting occurs at each stage. Players can choose to **check**, **bet**, **call**, **raise**, or **fold**. The round ends with a **showdown**, where the best hand wins.'),
     terms: {
@@ -46,7 +46,7 @@ export const th = (step: number): Step => step == 0 ? {
 } : {
     embed: new EmbedBuilder()
         .setColor(EMBED_COLOR)
-        .setThumbnail(TEXASHOLDEM_URL)
+        .setThumbnail(urls.texasHoldem)
         .setTitle('Texas Hold\'em: Betting & Strategy')
         .setDescription('Betting is a crucial part of Texas Hold\'em. Players can choose to be aggressive or conservative depending on their cards and strategy. Bluffing, or pretending to have a strong hand when you don\'t, is a common tactic. Understanding **pot odds** and **position** can give you an advantage over your opponents.'),
     terms: {

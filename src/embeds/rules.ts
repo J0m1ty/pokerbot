@@ -1,5 +1,5 @@
 import { EmbedBuilder } from "discord.js";
-import { EMBED_COLOR } from "../config/constants.js";
+import { EMBED_COLOR } from "../config/discord.js";
 
 export const rules = () => new EmbedBuilder()
     .setColor(EMBED_COLOR)

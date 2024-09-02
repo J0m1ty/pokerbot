@@ -11,6 +11,11 @@ const event: Event = {
         const command = client.commands.get(interaction.commandName);
         if (!command) return;
 
+        if (command.scope == "dm" && interaction.guildId) {
+            await interaction.reply({ content: 'This command is only available in DMs.', ephemeral: true }).catch(() => {});
+            return;
+        }
+
         if (command.scope == "guild" && interaction.guildId != GUILD_ID) {
             await interaction.reply({ content: 'This command is only available within the RIT Poker Club server.', ephemeral: true }).catch(() => {});
             return;

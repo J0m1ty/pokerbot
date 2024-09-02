@@ -1,4 +1,4 @@
-import { AutocompleteFocusedOption, AutocompleteInteraction, ChatInputCommandInteraction, ClientEvents, EmbedBuilder, SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
+import { AutocompleteFocusedOption, AutocompleteInteraction, ChatInputCommandInteraction, ClientEvents, EmbedBuilder, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
 
 export type Verification = { email: string } & ({
     step: 'email';
@@ -10,10 +10,11 @@ export type Verification = { email: string } & ({
 
 export type Account = {
     claimed: number;
+    streak: number;
     balance: number;
 }
 
-export type Scope = 'dm' | 'guild' | (string & {});
+export type Scope = 'global' | 'dm' | 'guild' | (string & {});
 
 export type Step = {
     embed: EmbedBuilder;
@@ -24,7 +25,7 @@ export type Step = {
 export interface Command {
     scope: Scope;
     membership?: true;
-    data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
+    data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | SlashCommandSubcommandsOnlyBuilder;
     autocompletes?: (focusedOption: AutocompleteFocusedOption, interaction: AutocompleteInteraction) => Promise<string[]>,
     execute(interaction: ChatInputCommandInteraction): Promise<void>;
 }

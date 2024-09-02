@@ -1,5 +1,5 @@
 import { Client as BaseClient, ClientOptions, Collection, GatewayIntentBits, Partials } from "discord.js";
-import { Command } from "./structures.js";
+import { Account, Command } from "./structures.js";
 import { QuickDB } from "quick.db";
 import { GUILD_ID } from "./config/discord.js";
 import { Canvas, CanvasRenderingContext2D } from "skia-canvas";
@@ -7,6 +7,10 @@ import { Canvas, CanvasRenderingContext2D } from "skia-canvas";
 export class Client extends BaseClient {
     commands: Collection<string, Command> = new Collection();
     db: QuickDB = new QuickDB();
+
+    get default(): Account {
+        return { claimed: 0, streak: 0, balance: 1_000 };
+    }
 
     constructor(options: ClientOptions) {
         super(options);

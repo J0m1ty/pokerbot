@@ -4,7 +4,6 @@ import { client } from "./client.js";
 import { Verification } from "./structures.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle,MessageActionRowComponentBuilder } from "discord.js";
 import { rules } from "./embeds/rules.js";
-import { PORT } from "./config/constants.js";
 
 const app = express();
 
@@ -42,9 +41,11 @@ app.get('/verify', async (req, res) => {
 });
 
 export const server = () => {
+    const port = 4040;
+
     return new Promise<void>(resolve => {
-        createServer(app).listen(PORT, () => {
-            console.log(`Server listening on port :${PORT}`);
+        createServer(app).listen(port, () => {
+            console.log(`Server listening on port :${port}`);
             resolve();
         });
     });

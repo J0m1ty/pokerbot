@@ -1,23 +1,37 @@
-import { AttachmentBuilder, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import { Account, Command } from "../structures.js";
 import { client } from "../client.js";
-import { EMBED_COLOR, EMBED_COLOR_HEX, JOIN_BONUS } from "../config/constants.js";
-import { loadImage } from "skia-canvas";
+import { CanvasRenderingContext2D, loadImage } from "skia-canvas";
+import { EMBED_COLOR } from "../config/discord.js";
+import { chips } from "../data/chips.js";
+import { clamp, map } from "../utils.js";
 
-const map = (n: number, from1: number, to1: number, from2: number, to2: number) => (n - from1) / (to1 - from1) * (to2 - from2) + from2;
+const rect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, fill: any) => {
+    ctx.beginPath();
+    ctx.rect(x, y, width, height);
+    ctx.fillStyle = fill;
+    ctx.fill();
+}
 
-const clamp = (n: number, min: number, max: number) => Math.min(Math.max(n, min), max);
+const ellipse = (ctx: CanvasRenderingContext2D, x: number, y: number, radiusX: number, radiusY: number, fill?: any, stroke?: true) => {
+    ctx.beginPath();
+    ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+    if (stroke) ctx.stroke();
+    if (fill) {
+        ctx.fillStyle = fill;
+        ctx.fill();
+    }
+}
 
-const chips: { [ value: number ]: { color: string, highlight: string, accent: string } } = {
-    1: { color: '239,239,239', highlight: '125,125,125', accent: '63,97,178' },
-    5: { color: '211,48,53', highlight: '125,125,125', accent: '219,222,229' },
-    10: { color: '56,93,177', highlight: '125,125,125', accent: '219,222,229' },
-    25: { color: '0,189,94', highlight: '125,125,125', accent: '219,222,229' },
-    50: { color: '255,154,0', highlight: '125,125,125', accent: '219,222,229' },
-    100: { color: '31,29,30', highlight: '125,125,125', accent: '219,222,229' },
-    500: { color: '120,75,180', highlight: '125,125,125', accent: '219,222,229' },
-    1000: { color: '245,215,52', highlight: '125,125,125', accent: '31,29,30' },
-    5000: { color: '244,94,167', highlight: '125,125,125', accent: '219,222,229' },
+const quad = (ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, fill: any) => {
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineTo(x3, y3);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
 }
 
 const distribute = (amount: number) => {
@@ -34,7 +48,7 @@ const distribute = (amount: number) => {
             const count = Math.min(8, total - j);
             result.push({ value, count });
             amount -= count * value;
-            if (amount - value * 8 < 0 && value != 1) break;
+            if (amount - value * 8 <= 0 && value != 1) break;
         }
     }
 
@@ -42,59 +56,43 @@ const distribute = (amount: number) => {
 }
 
 const command: Command = {
-    scope: 'guild',
+    scope: 'global',
     data: new SlashCommandBuilder()
         .setName('balance')
-        .setDescription('View your account balance'),
+        .setDescription('View your account balance')
+        .addBooleanOption(option => option.setName('private').setDescription('Whether to show the balance privately').setRequired(false)),
     async execute(interaction) {
-        const account: Account = await client.db.table('economy').get<Account>(interaction.user.id) ?? { claimed: 0, balance: JOIN_BONUS };
+        const member = await client.member(interaction.user.id);
+        if (!member) return;
+        
+        const account: Account = await client.db.table('economy').get<Account>(member.id) ?? client.default;
 
         const stacks = distribute(account.balance);
 
         const image = await client.canvas(600, 200, async ({ ctx, width, height }) => {
-            ctx.fillStyle = EMBED_COLOR_HEX;
-            ctx.fillRect(0, 0, width, height);
+            rect(ctx, 0, 0, width, height, `#${EMBED_COLOR.toString(16).padStart(6, '0')}`);
 
             const tx = width / 2, ty = height * 0.65;
 
-            ctx.beginPath();
-            ctx.fillStyle = '#5C4033';
-            ctx.moveTo(tx - 280, ty);
-            ctx.lineTo(tx + 280, ty);
-            ctx.lineTo(tx + 280 - 25, height);
-            ctx.lineTo(tx - 280 + 25, height);
-            ctx.fill();
+            quad(ctx, tx - 280, ty, tx + 280, ty, tx + 280 - 25, height, tx - 280 + 25, height, '#5C4033');
 
-            ctx.beginPath();
-            ctx.fillStyle = '#17e605';
-            ctx.ellipse(tx, ty - 5, 280, 90, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ellipse(ctx, tx, ty - 5, 280, 90, '#5C4033');
 
-            ctx.beginPath();
-            ctx.fillStyle = '#134f12';
-            ctx.ellipse(tx, ty + 5, 280, 90, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ellipse(ctx, tx, ty + 5, 280, 90, '#134f12');
 
-            ctx.beginPath();
             const gradient = ctx.createRadialGradient(tx, ty, 0, tx, ty, 280);
             gradient.addColorStop(0, '#2ce31b');
             gradient.addColorStop(1, '#34b514');
-            ctx.fillStyle = gradient;
-            ctx.ellipse(tx, ty, 280, 90, 0, 0, Math.PI * 2);
-            ctx.fill();
 
-            const chipX = 20, chipY = 4;
+            ellipse(ctx, tx, ty, 280, 90, gradient);
 
-            const display = ({ x, y, chips, color, highlight, accent }: { x: number, y: number, chips: number, color: string, highlight: string, accent: string }) => {
+            const stack = ({ x, y, chips, color, accent }: { x: number, y: number, chips: number, color: string, accent: string }) => {
+                const chipX = 20, chipY = 4;
+                
                 for (let i = 0; i < chips; i++) {
                     for (let j = 0; j < chipY; j++) {
-                        ctx.beginPath();
-                        ctx.lineWidth = 1;
-                        ctx.strokeStyle = (j == chipY - 1 && i != chips - 1) ? `rgba(${highlight}, 0.25)` : `rgba(${color}, 0.25)`;
-                        ctx.fillStyle = `rgba(${color}, 1)`;
-                        ctx.ellipse(x, y - (i * chipY) - j, chipX, 8, 0, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.stroke();
+                        ctx.strokeStyle = `rgba(${(j == chipY - 1 && i != chips - 1) ? `125,125,125` : color}, 0.25)`;
+                        ellipse(ctx, x, y - (i * chipY) - j, chipX, 8, `rgba(${color}, 1)`, true);
                     }
 
                     if (i % 2 == chips % 2) continue;
@@ -192,7 +190,7 @@ const command: Command = {
                 else counts[-1]++;
             }
 
-            const scale = clamp(map(stacks.length, 1, 16, 2, 1), 1, 2);
+            const scale = clamp(map(stacks.length, 1, 16, 2, 1), 1, 1.5);
 
             const gapX = 45, gapY = 25;
             ctx.save();
@@ -202,20 +200,20 @@ const command: Command = {
                 const count = counts[i];
                 const half = count / 2;
                 for (let j = 0; j < count; j++) {
-                    const stack = stacks.shift();
-                    if (!stack) continue;
+                    const top = stacks.shift();
+                    if (!top) continue;
                     
-                    display({ 
+                    stack({ 
                         x: - half * gapX + j * gapX + gapX / 2,
                         y: i * gapY + (gapY / 2) * (counts[1] == 0 ? 1 : 0),
-                        chips: stack.count, 
-                        ...chips[stack.value]
+                        chips: top.count, 
+                        ...chips[top.value]
                     });
                 }
             }
             ctx.restore();
 
-            const image = await loadImage('./images/white_chip.png');
+            const image = await loadImage('./assets/white_chip.png');
 
             ctx.drawImage(image, 10, 10, 30, 30);
             ctx.font = 'bold 24px Arial';
@@ -232,7 +230,8 @@ const command: Command = {
 
         await interaction.reply({
             embeds: [embed],
-            files: [image]
+            files: [image],
+            ephemeral: interaction.options.getBoolean('private') ?? true
         }).catch(() => { });
     }
 }

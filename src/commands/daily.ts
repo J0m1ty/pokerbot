@@ -1,15 +1,17 @@
 import { SlashCommandBuilder } from "discord.js";
 import { Account, Command } from "../structures.js";
 import { client } from "../client.js";
-import { JOIN_BONUS } from "../config/constants.js";
 
 const command: Command = {
-    scope: 'guild',
+    scope: 'global',
     data: new SlashCommandBuilder()
         .setName('daily')
         .setDescription('Claim your daily reward'),
     async execute(interaction) {
-        const account = await client.db.table('economy').get<Account>(interaction.user.id) ?? { claimed: 0, balance: JOIN_BONUS };
+        const member = await client.member(interaction.user.id);
+        if (!member) return;
+
+        const account = await client.db.table('economy').get<Account>(member.id) ?? client.default;
 
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
