@@ -25,19 +25,6 @@ jobs:
     - name: Install pnpm
       run: npm install -g pnpm
 
-    - name: Create pnpm store directory
-      run: |
-        mkdir -p ~/.pnpm-store
-
-    - name: Cache pnpm modules
-      uses: actions/cache@v3
-      with:
-        path: ~/.pnpm-store
-        key: ${{ runner.os }}-pnpm-${{ matrix.node-version }}-${{ hashFiles('pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-${{ matrix.node-version }}-
-          ${{ runner.os }}-pnpm-
-
     - name: Install dependencies
       run: pnpm install
 
