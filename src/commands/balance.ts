@@ -69,9 +69,9 @@ const command: Command = {
         const stacks = distribute(account.balance);
 
         const image = await client.canvas(600, 200, async ({ ctx, width, height }) => {
-            rect(ctx, 0, 0, width, height, `#${process.env.COLOR}`);
+            rect(ctx, 0, 0, width, height, `#${process.env.COLOR?.replace('0x', '')}`);
 
-            const tx = width / 2, ty = height * 0.65;
+            const tx = width / 2, ty = height * 0.65, scale = clamp(map(stacks.length, 1, 16, 2, 1), 1, 1.5);
 
             quad(ctx, tx - 280, ty, tx + 280, ty, tx + 280 - 25, height, tx - 280 + 25, height, '#5C4033');
 
@@ -96,92 +96,34 @@ const command: Command = {
 
                     if (i % 2 == chips % 2) continue;
 
-                    // center design
-                    ctx.beginPath();
-                    ctx.fillStyle = `rgba(${accent}, 0.85)`;
-                    ctx.moveTo(x - 1.5, y - (i * chipY) + 5.5);
-                    ctx.lineTo(x + 1.5, y - (i * chipY) + 5.5);
-                    ctx.lineTo(x + 1.5, y - (i * chipY) + 8.5);
-                    ctx.lineTo(x - 1.5, y - (i * chipY) + 8.5);
-                    ctx.fill();
+                    quad(ctx, x - 1.5, y - (i * chipY) + 5.5, x + 1.5, y - (i * chipY) + 5.5, x + 1.5, y - (i * chipY) + 8.5, x - 1.5, y - (i * chipY) + 8.5, `rgba(${accent}, 0.85)`);
 
-                    // right design
-                    ctx.beginPath();
-                    ctx.moveTo(x + 12, y - (i * chipY) + 4);
-                    ctx.lineTo(x + 14.5, y - (i * chipY) + 3);
-                    ctx.lineTo(x + 14.5, y - (i * chipY) + 6);
-                    ctx.lineTo(x + 12, y - (i * chipY) + 7);
-                    ctx.fill();
+                    quad(ctx, x + 12, y - (i * chipY) + 4, x + 14.5, y - (i * chipY) + 3, x + 14.5, y - (i * chipY) + 6, x + 12, y - (i * chipY) + 7, `rgba(${accent}, 0.85)`);
 
-                    // left design
-                    ctx.beginPath();
-                    ctx.moveTo(x - 12, y - (i * chipY) + 4);
-                    ctx.lineTo(x - 14.5, y - (i * chipY) + 3);
-                    ctx.lineTo(x - 14.5, y - (i * chipY) + 6);
-                    ctx.lineTo(x - 12, y - (i * chipY) + 7);
-                    ctx.fill();
+                    quad(ctx, x - 12, y - (i * chipY) + 4, x - 14.5, y - (i * chipY) + 3, x - 14.5, y - (i * chipY) + 6, x - 12, y - (i * chipY) + 7, `rgba(${accent}, 0.85)`);
                 }
 
-                // center design
-                ctx.beginPath();
                 ctx.strokeStyle = `rgba(${accent}, 0.7)`;
-                ctx.lineWidth = 1;
                 ctx.setLineDash([2, 2]);
-                ctx.ellipse(x, y - (chips * chipY) + 1, chipX * 0.4, 8 * 0.3, 0, 0, Math.PI * 2);
-                ctx.stroke();
+                ellipse(ctx, x, y - (chips * chipY) + 1, chipX * 0.4, 8 * 0.3, null, true);
                 ctx.setLineDash([]);
+                
+                quad(ctx, x - 1, y - (chips * chipY) + 6, x + 1, y - (chips * chipY) + 6, x + 1.5, y - (chips * chipY) + 9, x - 1.5, y - (chips * chipY) + 9, `rgba(${accent}, 0.85)`);
 
-                // bottom center design
-                ctx.beginPath();
-                ctx.fillStyle = `rgba(${accent}, 0.85)`;
-                ctx.moveTo(x - 1, y - (chips * chipY) + 6);
-                ctx.lineTo(x + 1, y - (chips * chipY) + 6);
-                ctx.lineTo(x + 1.5, y - (chips * chipY) + 9);
-                ctx.lineTo(x - 1.5, y - (chips * chipY) + 9);
-                ctx.fill();
 
-                // bottom right design
-                ctx.beginPath();
-                ctx.moveTo(x + 9, y - (chips * chipY) + 5);
-                ctx.lineTo(x + 11.5, y - (chips * chipY) + 4);
-                ctx.lineTo(x + 14.5, y - (chips * chipY) + 6);
-                ctx.lineTo(x + 12, y - (chips * chipY) + 7);
-                ctx.fill();
+                quad(ctx, x + 9, y - (chips * chipY) + 5, x + 11.5, y - (chips * chipY) + 4, x + 14.5, y - (chips * chipY) + 6, x + 12, y - (chips * chipY) + 7, `rgba(${accent}, 0.85)`);
 
-                // bottom left design
-                ctx.beginPath();
-                ctx.moveTo(x - 9, y - (chips * chipY) + 5);
-                ctx.lineTo(x - 11.5, y - (chips * chipY) + 4);
-                ctx.lineTo(x - 14.5, y - (chips * chipY) + 6);
-                ctx.lineTo(x - 12, y - (chips * chipY) + 7);
-                ctx.fill();
 
-                // top center design
-                ctx.beginPath();
-                ctx.moveTo(x - 0.9, y - (chips * chipY) - 4);
-                ctx.lineTo(x + 0.9, y - (chips * chipY) - 4);
-                ctx.lineTo(x + 1.4, y - (chips * chipY) - 7);
-                ctx.lineTo(x - 1.4, y - (chips * chipY) - 7);
-                ctx.fill();
+                quad(ctx, x - 9, y - (chips * chipY) + 5, x - 11.5, y - (chips * chipY) + 4, x - 14.5, y - (chips * chipY) + 6, x - 12, y - (chips * chipY) + 7, `rgba(${accent}, 0.85)`);
 
-                // top right design
-                ctx.beginPath();
-                ctx.moveTo(x + 9, y - (chips * chipY) - 3);
-                ctx.lineTo(x + 11.5, y - (chips * chipY) - 2);
-                ctx.lineTo(x + 14.5, y - (chips * chipY) - 4);
-                ctx.lineTo(x + 12, y - (chips * chipY) - 5);
-                ctx.fill();
+                quad(ctx, x - 0.9, y - (chips * chipY) - 4, x + 0.9, y - (chips * chipY) - 4, x + 1.4, y - (chips * chipY) - 7, x - 1.4, y - (chips * chipY) - 7, `rgba(${accent}, 0.85)`);
 
-                // top left design
-                ctx.beginPath();
-                ctx.moveTo(x - 9, y - (chips * chipY) - 3);
-                ctx.lineTo(x - 11.5, y - (chips * chipY) - 2);
-                ctx.lineTo(x - 14.5, y - (chips * chipY) - 4);
-                ctx.lineTo(x - 12, y - (chips * chipY) - 5);
-                ctx.fill();
+                quad(ctx, x + 9, y - (chips * chipY) - 3, x + 11.5, y - (chips * chipY) - 2, x + 14.5, y - (chips * chipY) - 4, x + 12, y - (chips * chipY) - 5, `rgba(${accent}, 0.85)`);
+
+                quad(ctx, x - 9, y - (chips * chipY) - 3, x - 11.5, y - (chips * chipY) - 2, x - 14.5, y - (chips * chipY) - 4, x - 12, y - (chips * chipY) - 5, `rgba(${accent}, 0.85)`);
             }
 
-            const counts: { [pos: number]: number } = { [-1]: 1, [0]: 0, [1]: 0 };
+            const counts: { [pos: number]: number } = { [-1]: 1, 0: 0, 1: 0 };
 
             for (let i = 1; i < stacks.length; i++) {
                 if (counts[1] < counts[0] - 1) counts[1]++;
@@ -189,12 +131,10 @@ const command: Command = {
                 else counts[-1]++;
             }
 
-            const scale = clamp(map(stacks.length, 1, 16, 2, 1), 1, 1.5);
-
-            const gapX = 45, gapY = 25;
             ctx.save();
             ctx.translate(tx, ty);
             ctx.scale(scale, scale);
+            const gapX = 45, gapY = 25;
             for (let i = -1; i <= 1; i++) {
                 const count = counts[i];
                 const half = count / 2;

@@ -8,6 +8,16 @@ export type Verification = { email: string } & ({
     buttonId: string;
 });
 
+export type Table = { id: string } & ({
+    game: 'blackjack';
+    decks: number;
+    maxPlayers: number;
+    minBet: number;
+    maxBet: number | null;
+} | {
+    game: 'texasholdem';
+});
+
 export type Account = {
     claimed: number;
     streak: number;

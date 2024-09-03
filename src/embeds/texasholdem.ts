@@ -48,8 +48,9 @@ export const th = (step: number): Step => {
         },
         last: true
     }
+    
     out.embed
-        .setThumbnail(urls.texasHoldem)
+        .setThumbnail(urls.texasholdem)
         .setColor(Number(process.env.COLOR));
 
     return out;
