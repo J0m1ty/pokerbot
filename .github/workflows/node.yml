@@ -22,15 +22,6 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Cache pnpm modules
-      uses: actions/cache@v3
-      with:
-        path: ~/.pnpm-store
-        key: ${{ runner.os }}-pnpm-${{ matrix.node-version }}-${{ hashFiles('pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-${{ matrix.node-version }}-
-          ${{ runner.os }}-pnpm-
-
     - name: Install pnpm
       run: npm install -g pnpm
 
