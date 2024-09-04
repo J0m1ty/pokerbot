@@ -11,7 +11,7 @@ export const bj = (step: number): Step => {
             "Hand_Value": "The total value of the cards in your hand.",
             "Bust": "When the total hand value exceeds 21, resulting in an automatic loss."
         },
-        last: false
+        isLastStep: false
     } : step == 1 ? {
         embed: new EmbedBuilder()
             .setTitle('Blackjack: The Basics & Setup')
@@ -20,7 +20,7 @@ export const bj = (step: number): Step => {
             "Face_Cards": "The Jack, Queen, and King, each worth 10 points.",
             "Ace": "A card that can be worth 1 or 11, depending on which is more favorable to the hand."
         },
-        last: false
+        isLastStep: false
     } : step == 2 ? {
         embed: new EmbedBuilder()
             .setTitle('Blackjack: Gameplay Actions')
@@ -31,7 +31,7 @@ export const bj = (step: number): Step => {
             "Double_Down": "Doubling your bet for the opportunity to receive exactly one more card.",
             "Split": "Splitting your hand into two separate hands, only when dealt two of the same card."
         },
-        last: false
+        isLastStep: false
     } : {
         embed: new EmbedBuilder()
             .setTitle('Blackjack: Winning & Payouts')
@@ -40,7 +40,7 @@ export const bj = (step: number): Step => {
             "Push": "A tie between the player and the dealer, resulting in the player getting their bet back.",
             "Blackjack": "An automatic win with a hand value of 21, consisting of an Ace and a 10-value card, paying 3:2."
         },
-        last: true
+        isLastStep: true
     }
 
     out.embed

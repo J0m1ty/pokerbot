@@ -11,7 +11,7 @@ const command: Command = {
         const member = await client.member(interaction.user.id);
         if (!member) return;
 
-        const account = await client.db.table('economy').get<Account>(member.id) ?? client.default;
+        const account = await client.db.table('economy').get<Account>(member.id) ?? client.getDefaultAccount;
 
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());

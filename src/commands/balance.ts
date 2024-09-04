@@ -5,6 +5,7 @@ import { CanvasRenderingContext2D, loadImage } from "skia-canvas";
 import { chips } from "../data/chips.js";
 import { clamp, map } from "../utils.js";
 
+// Helper functions for drawing a rectangle
 const rect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, fill: any) => {
     ctx.beginPath();
     ctx.rect(x, y, width, height);
@@ -12,6 +13,7 @@ const rect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number
     ctx.fill();
 }
 
+// Helper function for drawing an ellipse
 const ellipse = (ctx: CanvasRenderingContext2D, x: number, y: number, radiusX: number, radiusY: number, fill?: any, stroke?: true) => {
     ctx.beginPath();
     ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
@@ -22,6 +24,7 @@ const ellipse = (ctx: CanvasRenderingContext2D, x: number, y: number, radiusX: n
     }
 }
 
+// Helper function for drawing a quad
 const quad = (ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, fill: any) => {
     ctx.beginPath();
     ctx.moveTo(x0, y0);
@@ -33,6 +36,7 @@ const quad = (ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number,
     ctx.fill();
 }
 
+// Helper function for distributing an amount of money into chips of proper stacks
 const distribute = (amount: number) => {
     const values = Object.keys(chips).sort((a, b) => Number(b) - Number(a));
     const result: { value: number, count: number }[] = [];
@@ -64,7 +68,7 @@ const command: Command = {
         const member = await client.member(interaction.user.id);
         if (!member) return;
         
-        const account = await client.db.table('economy').get<Account>(member.id) ?? client.default;
+        const account = await client.db.table('economy').get<Account>(member.id) ?? client.getDefaultAccount;
 
         const stacks = distribute(account.balance);
 

@@ -3,8 +3,9 @@ import { Command } from "../structures.js";
 import { th } from "../embeds/texasholdem.js";
 import { bj } from "../embeds/blackjack.js";
 
+// Generates a message with a game tutorial
 export const generate = async (interaction: ChatInputCommandInteraction | ButtonInteraction, { game, step }: { game: string, step: number }) => {
-    const { embed, terms, last } = game === 'texasholdem' ? th(step) : bj(step);
+    const { embed, terms, isLastStep: last } = game === 'texasholdem' ? th(step) : bj(step);
 
     const button = new ActionRowBuilder<MessageActionRowComponentBuilder>()
         .addComponents(
@@ -28,11 +29,6 @@ export const generate = async (interaction: ChatInputCommandInteraction | Button
     const collector = response.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 60000 });
 
     collector.on('collect', async i => {
-        if (i.user.id != interaction.user.id) {
-            await i.reply({ content: 'This select menu is not for you!', ephemeral: true }).catch(() => { });
-            return;
-        }
-
         const game = i.customId.split('-')[1];
         const step = parseInt(i.customId.split('-')[2]);
         const { terms } = game === 'texasholdem' ? th(step) : bj(step);

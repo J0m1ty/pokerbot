@@ -12,7 +12,7 @@ export const th = (step: number): Step => {
             "Hand": "The combination of cards a player has.",
             "Fold": "To give up the current round, forfeiting any claim to the pot."
         },
-        last: false
+        isLastStep: false
     } : step == 1 ? {
         embed: new EmbedBuilder()
             .setTitle('Texas Hold\'em: The Basics & Setup')
@@ -23,7 +23,7 @@ export const th = (step: number): Step => {
             "The_Turn": "The fourth community card dealt face up.",
             "The_River": "The fifth and final community card dealt face up."
         },
-        last: false
+        isLastStep: false
     } : step == 2 ? {
         embed: new EmbedBuilder()
             .setTitle('Texas Hold\'em: How to Play a Round')
@@ -36,7 +36,7 @@ export const th = (step: number): Step => {
             "Raise": "To increase the current bet.",
             "Showdown": "The final stage where players reveal their hands to determine the winner."
         },
-        last: false
+        isLastStep: false
     } : {
         embed: new EmbedBuilder()
             .setTitle('Texas Hold\'em: Betting & Strategy')
@@ -46,7 +46,7 @@ export const th = (step: number): Step => {
             "Pot_Odds": "The ratio of the current size of the pot to the cost of a contemplated call.",
             "Position": "The order in which players act during a round, which can influence strategy."
         },
-        last: true
+        isLastStep: true
     }
     
     out.embed

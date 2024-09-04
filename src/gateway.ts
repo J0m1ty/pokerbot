@@ -5,6 +5,9 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+/**
+ * Load all files in a directory and call a function with the exports
+ */
 export const load = async (dir: string, fn: (ex: any) => void) => {
     const files = await readdir(join(__dirname, dir));
 

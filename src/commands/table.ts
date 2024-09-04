@@ -71,7 +71,7 @@ const command: Command = {
                     return;
                 }
                 
-                const account = await client.db.table('economy').get<Account>(member.id) ?? client.default;
+                const account = await client.db.table('economy').get<Account>(member.id) ?? client.getDefaultAccount;
                 const buyin = table.game == "texasholdem" ? table.options.buyIn : Math.max(interaction.options.getInteger('buyin') ?? account.balance, table.options.maxBet);
 
                 if (account.balance < buyin) {

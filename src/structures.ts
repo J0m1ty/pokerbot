@@ -1,9 +1,18 @@
 import { AutocompleteFocusedOption, AutocompleteInteraction, ChatInputCommandInteraction, ClientEvents, EmbedBuilder, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
 
+// Card definitions
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
 export type Rank = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A';
 export type Card = `${Rank} of ${Suit}`;
 
+// Represents the current step of the '/learn' command
+export type Step = {
+    embed: EmbedBuilder;
+    terms: Record<string, string>;
+    isLastStep: boolean;
+}
+
+// Value type of the 'pending' table in the database
 export type Verification = { email: string } & ({
     step: 'email';
     token: string;
@@ -12,6 +21,7 @@ export type Verification = { email: string } & ({
     buttonId: string;
 });
 
+// Player and table definitions
 export type History = {
     hand: [ Card, Card ];
     change: number;
@@ -45,6 +55,7 @@ export type TexasHoldemPlayer = BasePlayer & {
     position?: 'smallBlind' | 'bigBlind' | 'dealer';
 }
 
+// Value type of the 'tables' table in the database
 export type Table = { id: string, stakes: 'low' | 'medium' | 'high' } & ({
     game: 'blackjack';
     players: BlackjackPlayer[];
@@ -78,19 +89,15 @@ export type Table = { id: string, stakes: 'low' | 'medium' | 'high' } & ({
     }
 });
 
+// Value type of the 'economy' table in the database
 export type Account = {
     claimed: number;
     streak: number;
     balance: number;
 }
 
+// Command and event definitions
 export type Scope = 'global' | 'dm' | 'guild' | (string & {});
-
-export type Step = {
-    embed: EmbedBuilder;
-    terms: Record<string, string>;
-    last: boolean;
-}
 
 export interface Command {
     scope: Scope;

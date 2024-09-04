@@ -7,6 +7,7 @@ import { rules } from "./embeds/rules.js";
 
 const app = express();
 
+// '/verify' route handles email verification; you get here by clicking a link in the email
 app.get('/verify', async (req, res) => {
     const id = req.query.id as string;
     const token = req.query.token as string;
@@ -40,6 +41,7 @@ app.get('/verify', async (req, res) => {
     res.send('Email verified! You can now close this tab. Please check your DMs for the next steps.');
 });
 
+// Creates and starts the web server
 export const server = () => {
     const port = 4040;
 
