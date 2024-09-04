@@ -20,7 +20,7 @@ const command: Command = {
                 .addNumberOption(option =>
                     option.setName('maxplayers')
                         .setDescription('The maximum number of players')
-                        .setMinValue(2)
+                        .setMinValue(1)
                         .setMaxValue(7)
                 )
                 .addNumberOption(option =>
@@ -38,6 +38,27 @@ const command: Command = {
             subcommand
                 .setName('texasholdem')
                 .setDescription('Register a Texas Hold\'em table')
+                .addNumberOption(option =>
+                    option.setName('maxplayers')
+                        .setDescription('The maximum number of players')
+                        .setMinValue(2)
+                        .setMaxValue(9)
+                )
+                .addNumberOption(option =>
+                    option.setName('smallblind')
+                        .setDescription('The small blind amount')
+                        .setMinValue(1)
+                )
+                .addNumberOption(option =>
+                    option.setName('bigblind')
+                        .setDescription('The big blind amount')
+                        .setMinValue(2)
+                )
+                .addNumberOption(option =>
+                    option.setName('buyin')
+                        .setDescription('The buy-in amount')
+                        .setMinValue(100)
+                )
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     async execute(interaction) {
@@ -51,16 +72,32 @@ const command: Command = {
 
         const game = interaction.options.getSubcommand() as ("blackjack" | "texasholdem");
 
+        const minBet = (game == "blackjack" ? interaction.options.getInteger('minbet') : interaction.options.getInteger('bigblind')) ?? 1;
+
         await client.db.table('tables').set<Table>(channel.id, game == "blackjack" ? {
             id: channel.id,
             game,
-            decks: interaction.options.getInteger('decks') ?? 4,
-            maxPlayers: interaction.options.getInteger('maxplayers') ?? 7,
-            minBet: interaction.options.getInteger('minbet') ?? 1,
-            maxBet: interaction.options.getInteger('maxbet') ?? null,
+            stakes: minBet <= 10 ? 'low' : minBet <= 50 ? 'medium' : 'high',
+            players: [],
+            state: {},
+            options: {
+                decks: interaction.options.getInteger('decks') ?? 4,
+                maxPlayers: interaction.options.getInteger('maxplayers') ?? 7,
+                minBet: interaction.options.getInteger('minbet') ?? 1,
+                maxBet: interaction.options.getInteger('maxbet') ?? minBet * 25
+            }
         } : {
             id: channel.id,
             game,
+            stakes: minBet <= 5 ? 'low' : minBet <= 20 ? 'medium' : 'high',
+            players: [],
+            state: {},
+            options: {
+                maxPlayers: interaction.options.getInteger('maxplayers') ?? 9,
+                smallBlind: interaction.options.getInteger('smallblind') ?? 1,
+                bigBlind: interaction.options.getInteger('bigblind') ?? minBet * 2,
+                buyIn: interaction.options.getInteger('buyin') ?? minBet * 50
+            }
         });
 
         await interaction.reply({ content: 'Table registered successfully!', ephemeral: true }).catch(() => { });

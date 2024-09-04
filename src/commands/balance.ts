@@ -64,7 +64,7 @@ const command: Command = {
         const member = await client.member(interaction.user.id);
         if (!member) return;
         
-        const account: Account = await client.db.table('economy').get<Account>(member.id) ?? client.default;
+        const account = await client.db.table('economy').get<Account>(member.id) ?? client.default;
 
         const stacks = distribute(account.balance);
 
