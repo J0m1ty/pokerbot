@@ -2,8 +2,8 @@ import { AutocompleteFocusedOption, AutocompleteInteraction, ChatInputCommandInt
 
 // Card definitions
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
-export type Rank = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A';
-export type Card = `${Rank} of ${Suit}`;
+export type Rank = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'jack' | 'queen' | 'king' | 'ace';
+export type Card = `${Rank}_of_${Suit}`;
 
 // Represents the current step of the '/learn' command
 export type Step = {
@@ -22,46 +22,60 @@ export type Verification = { email: string } & ({
 });
 
 // Player and table definitions
-export type History = {
-    hand: [ Card, Card ];
-    change: number;
-    outcome: 'win' | 'lose' | 'push' | 'fold';
-}
+export type BlackjackAction = {
+    type: 'hit' | 'stand' | 'double' | 'split';
+} | {
+    type: 'insurance';
+    bet: number;
+};
+
+export type TexasHoldemAction = {
+    action: 'check' | 'call' | 'fold';
+} | {
+    action: 'raise';
+    amount?: number;
+};
 
 export type BasePlayer = {
     id: string;
     balance: number;
-    history: History[];
+    inactivity: number;
     leaving: boolean;
+    seat: number;
 }
 
 export type BlackjackPlayer = BasePlayer & {
     wager: number;
-    hand?: [ Card, Card ];
-    insuranceBet?: number;
-    status?: 'playing' | 'stood' | 'busted' | 'doubled' | 'split';
-    splitHands?: {
+    queuedAction: BlackjackAction | null;
+    insurenceBet: number;
+    hands: {
         hand: [Card, Card];
-        wager: number;
-        status: 'playing' | 'stood' | 'busted' | 'doubled';
+        doubled: boolean;
     }[];
 }
 
 export type TexasHoldemPlayer = BasePlayer & {
-    seat: number;
-    firstHand?: boolean; // players must bet the big blind on their first hand
+    queuedAction: TexasHoldemAction | null;
+    position: 'smallBlind' | 'bigBlind' | 'dealer' | null;
     hand?: [ Card, Card ];
-    action?: 'folded' | 'checked' | 'called' | 'raised' | 'all-in';
-    position?: 'smallBlind' | 'bigBlind' | 'dealer';
 }
 
 // Value type of the 'tables' table in the database
-export type Table = { id: string, stakes: 'low' | 'medium' | 'high' } & ({
+export type Table = { 
+    id: string;
+    stakes: 'low' | 'medium' | 'high';
+    turnDuration: number;
+    cards: Card[];
+ } & ({
     game: 'blackjack';
     players: BlackjackPlayer[];
     state: {
-        dealerHand?: [Card, Card];
-        currentTurn?: string;
+        phase: 'playing';
+        dealerHand: [Card, Card];
+        currentTurn: string;
+        currentHand: number;
+    } | {
+        phase: 'waiting';
     }
     options: {
         decks: number;
@@ -73,13 +87,15 @@ export type Table = { id: string, stakes: 'low' | 'medium' | 'high' } & ({
     game: 'texasholdem';
     players: TexasHoldemPlayer[];
     state: {
-        communityCards?: Card[];
-        pots?: {
+        phase: 'playing';
+        communityCards: Card[];
+        pots: {
             amount: number;
             players: string[];
         }[];
-        phase?: 'pre-flop' | 'flop' | 'turn' | 'river' | 'showdown';
-        currentTurn?: string;
+        currentTurn: string;
+    } | {
+        phase: 'waiting';
     }
     options: {
         maxPlayers: number; // default is 9

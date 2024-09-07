@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "discord.js";
-import { Account, BlackjackPlayer, Command, Table } from "../structures.js";
+import { Account, Command, Table } from "../structures.js";
 import { info } from "../embeds/info.js";
 import { client } from "../client.js";
 
@@ -79,13 +79,16 @@ const command: Command = {
                     return;
                 }
 
+                const seat = Array.from({ length: table.options.maxPlayers }, (_, i) => i).find(seat => !table.players.some(player => player.seat == seat))!;
+
                 if (table.game == "blackjack") {
                     table.players.push({
                         id: member.id,
                         balance: buyin,
                         history: [],
                         leaving: false,
-                        wager: table.options.minBet
+                        wager: table.options.minBet,
+                        seat
                     });
                 }
                 else {
@@ -94,7 +97,7 @@ const command: Command = {
                         balance: buyin,
                         history: [],
                         leaving: false,
-                        seat: Array.from({ length: table.options.maxPlayers }, (_, i) => i).find(seat => !table.players.some(player => player.seat == seat))!
+                        seat
                     });
                 }
 

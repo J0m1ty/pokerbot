@@ -11,26 +11,31 @@ const command: Command = {
             subcommand
                 .setName('blackjack')
                 .setDescription('Register a blackjack table')
-                .addNumberOption(option =>
+                .addIntegerOption(option =>
                     option.setName('decks')
                         .setDescription('The number of decks to use')
                         .setMinValue(1)
                         .setMaxValue(8)
                 )
-                .addNumberOption(option =>
+                .addIntegerOption(option =>
                     option.setName('maxplayers')
                         .setDescription('The maximum number of players')
                         .setMinValue(1)
                         .setMaxValue(7)
                 )
-                .addNumberOption(option =>
+                .addIntegerOption(option =>
                     option.setName('minbet')
                         .setDescription('The minimum bet amount')
                         .setMinValue(1)
                 )
-                .addNumberOption(option =>
+                .addIntegerOption(option =>
                     option.setName('maxbet')
                         .setDescription('The maximum bet amount')
+                        .setMinValue(1)
+                )
+                .addIntegerOption(option =>
+                    option.setName('duration')
+                        .setDescription('The maximum duration of a player\'s turn in seconds')
                         .setMinValue(1)
                 )
         )
@@ -38,26 +43,31 @@ const command: Command = {
             subcommand
                 .setName('texasholdem')
                 .setDescription('Register a Texas Hold\'em table')
-                .addNumberOption(option =>
+                .addIntegerOption(option =>
                     option.setName('maxplayers')
                         .setDescription('The maximum number of players')
                         .setMinValue(2)
                         .setMaxValue(9)
                 )
-                .addNumberOption(option =>
+                .addIntegerOption(option =>
                     option.setName('smallblind')
                         .setDescription('The small blind amount')
                         .setMinValue(1)
                 )
-                .addNumberOption(option =>
+                .addIntegerOption(option =>
                     option.setName('bigblind')
                         .setDescription('The big blind amount')
                         .setMinValue(2)
                 )
-                .addNumberOption(option =>
+                .addIntegerOption(option =>
                     option.setName('buyin')
                         .setDescription('The buy-in amount')
                         .setMinValue(100)
+                )
+                .addIntegerOption(option =>
+                    option.setName('duration')
+                        .setDescription('The maximum duration of a player\'s turn in seconds')
+                        .setMinValue(1)
                 )
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
@@ -78,6 +88,7 @@ const command: Command = {
             id: channel.id,
             game,
             stakes: minBet <= 10 ? 'low' : minBet <= 50 ? 'medium' : 'high',
+            turnDuration: interaction.options.getInteger('duration') ?? 20,
             players: [],
             state: {},
             options: {
@@ -90,6 +101,7 @@ const command: Command = {
             id: channel.id,
             game,
             stakes: minBet <= 5 ? 'low' : minBet <= 20 ? 'medium' : 'high',
+            turnDuration: interaction.options.getInteger('duration') ?? 20,
             players: [],
             state: {},
             options: {
