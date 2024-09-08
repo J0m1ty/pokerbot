@@ -91,7 +91,7 @@ export class TexasHoldemTable implements TexasHoldemTableData {
             return 'left';
         }
 
-        player.leaving = true;
+        player.leaving = 'manual';
         await this.update();
         return 'leaving';
     }
@@ -120,7 +120,7 @@ export class TexasHoldemTable implements TexasHoldemTableData {
 
         player.inactivity++;
         if (player.inactivity >= 3) {
-            player.leaving = true;
+            player.leaving = 'afk';
         }
 
         await this.advanceTurn();

@@ -246,6 +246,7 @@ export class BlackjackTable implements BlackjackTableData {
 
             if (player.leaving) {
                 // TODO: tell the player they are leaving and why
+                console.log(`Player ${player.id} is leaving because of ${player.leaving}`);
 
                 await client.account(player.id, account => {
                     account.balance += player.balance;
@@ -308,6 +309,8 @@ export class BlackjackTable implements BlackjackTableData {
         });
 
         // TODO: send the initial hands to channel
+        console.log('Dealer:', (this.state as any).dealerHand[0], 'and a hidden card');
+        console.log('Players:', this.players.map(p => p.hand));
 
         // if first dealer card is an ace, prompt for insurance, otherwise continue with the first player's turn
         if (this.state.phase != 'waiting' && this.state.dealerHand[0].split('_')[0] === 'ace') {
@@ -327,6 +330,7 @@ export class BlackjackTable implements BlackjackTableData {
         });
 
         // TODO: send the insurance prompt to channel
+        console.log('Insurance prompt');
 
         // wait 15 seconds for players to take insurance
         await new Promise(resolve => setTimeout(resolve, this.turnDuration * 1_000));
@@ -336,25 +340,30 @@ export class BlackjackTable implements BlackjackTableData {
         const dealer = this.sum(this.state.dealerHand);
 
         // pay out insurance bets
-        await this.update(() => {
+        await this.update(async () => {
             for (const player of this.players) {
                 if (!player.insurenceBet || !player.hand) continue;
 
+                let result = '';
                 if (dealer == 21 && (!player.hand.split && this.sum(player.hand.cards) == 21)) {
                     player.balance += player.insurenceBet;
+                    result = 'push';
                 }
                 else if (dealer == 21) {
                     player.balance += player.insurenceBet * 2;
+                    result = 'won';
                 }
                 else {
                     player.balance -= player.insurenceBet;
+                    result = 'lost';
                 }
 
                 player.insurenceBet = null;
+
+                // TODO: send the insurance results to channel
+                console.log(`Insurance result for ${player.id}: ${result}`);
             }
         });
-
-        // TODO: send the insurance results to channel
 
         // continue with the first player's turn
         await this.turn();
@@ -364,6 +373,10 @@ export class BlackjackTable implements BlackjackTableData {
     async turn() {
         this.stopTimer();
 
+        await this.update(() => {
+            this.state.phase = 'playing';
+        });
+
         if (this.state.phase != 'waiting' && this.state.currentTurn == 'dealer') {
             this.dealer();
             return;
@@ -372,6 +385,7 @@ export class BlackjackTable implements BlackjackTableData {
         this.log('Waiting for player action');
 
         // TODO: send the current player's interaction menu to channel
+        console.log('Player action prompt');
 
         // start the player's turn
         this.restartTimer();
@@ -384,6 +398,7 @@ export class BlackjackTable implements BlackjackTableData {
         if (this.state.phase == 'waiting') return;
 
         // TODO: send the dealer's revealed hand to the channel
+        console.log('Dealer:', this.state.dealerHand);
 
         while (this.sum(this.state.dealerHand) < 17) {
             await this.update(() => {
@@ -392,6 +407,7 @@ export class BlackjackTable implements BlackjackTableData {
             });
 
             // TODO: send the dealer's updated hand to the channel
+            console.log('Dealer:', this.state.dealerHand);
         }
 
         await this.payout();
@@ -423,11 +439,14 @@ export class BlackjackTable implements BlackjackTableData {
                     return 0;
                 }
 
-                player.balance += calculate(player.hand);
+                const change = calculate(player.hand);
+
+                player.balance += change;
+
+                // TODO: send the payout results to the channel
+                console.log(`Result for ${player.id}: ${change > 0 ? 'won' : change < 0 ? 'lost' : 'push'}`);
             }
         });
-
-        // TODO: send the payout results to the channel
 
         await this.start();
     }
@@ -505,7 +524,7 @@ export class BlackjackTable implements BlackjackTableData {
         if (!player || !player.hand || player.id !== id) return 'error';
 
         const hand = this.activeHand;
-        if (!hand || hand.split || (!hand.split && hand.doubled)) return 'error';
+        if (!hand || hand.split || (!hand.split && hand.doubled) || hand.cards[0].split('_')[0] !== hand.cards[1].split('_')[0]) return 'error';
 
         if (player.balance < player.wager) return 'insufficient';
 
