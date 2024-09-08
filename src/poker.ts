@@ -13,7 +13,7 @@ export type BasePlayer = {
     balance: number;
     inactivity: number;
     playing: boolean;
-    leaving: boolean;
+    leaving: false | 'insufficient' | 'afk' | 'manual';
     seat: number;
 }
 
