@@ -13,7 +13,6 @@ export type Hand = {
 } & ({
     split: false;
     doubled: boolean;
-    busted: boolean;
     cards: [Card, Card];
 } | {
     split: true;
@@ -91,8 +90,6 @@ export class BlackjackTable implements BlackjackTableData {
     }
 
     constructor({ id, turnDuration, stakes, cards, players, state, options }: { id: string, turnDuration: number, stakes: BaseTable['stakes'], cards?: Card[], players?: BlackjackPlayer[], state?: BlackjackTableData['state'], options?: BlackjackTableData['options'] }) {
-        console.log('Creating Blackjack table with ID:', id);
-
         this.id = id;
         this.turnDuration = turnDuration;
         this.stakes = stakes;
@@ -100,187 +97,293 @@ export class BlackjackTable implements BlackjackTableData {
         this.state = state ?? { phase: 'waiting' };
         this.options = options ?? { numDecks: 1, maxPlayers: 7, minBet: 1, maxBet: 25 };
         this.cards = cards ?? this.shuffle();
-
         this.update();
 
-        if (this.state.phase != 'waiting') {
-            this.resetTimer();
+        this.log('Created Blackjack table');
 
-            if (this.state.currentTurn == 'dealer') this.dealerTurn();
+        // if waiting and there are enough players, start the game
+        if (this.state.phase == 'waiting' && this.players.length >= 1) {
+            this.start();
+        }
+
+        // if dealing, continue with the deal
+        if (this.state.phase == 'dealing') {
+            this.deal();
+        }
+
+        // if playing, continue with the current turn
+        if (this.state.phase == 'playing') {
+            this.turn();
+        }
+
+        // if paying out, continue with the payout
+        if (this.state.phase == 'payout') {
+            this.payout();
         }
     }
 
-    // Game functions
-    async join(id: string, buyIn: number): Promise<'join' | 'rejoin' | 'extant' | 'full'> {
+    // called when a player joins the table
+    async join(id: string, buyIn: number): Promise<'join' | 'rejoin' | 'extant' | 'full' | 'insufficient'> {
+        // check if the player is already in the game
         const player = this.players.find(p => p.id === id);
         if (player) {
             if (player.leaving) {
-                player.leaving = false;
-                await this.update();
+                await this.update(() => {
+                    player.leaving = false;
+                });
+
                 return 'rejoin';
             }
             return 'extant';
         }
 
+        // check if the table is full
         if (this.players.length >= this.options.maxPlayers) return 'full';
 
-        const seatNumber = Array.from({ length: this.options.maxPlayers }, (_, i) => i).find(seat => !this.players.some(p => p.seatNumber == seat))!;
-        this.players.push({
-            id,
-            balance: buyIn,
-            inactivity: 0,
-            playing: false,
-            leaving: false,
-            wager: this.options.minBet,
-            action: null,
-            insurenceBet: 0,
-            hand: null,
-            seatNumber
+        // check if the player has enough balance
+        const account = await client.account(id);
+        if (account.balance < buyIn) return 'insufficient';
+
+        // deduct the buy-in from the player's balance
+        await client.account(id, account => {
+            account.balance -= buyIn;
         });
 
-        await this.update();
+        // add the player to the table
+        await this.update(() => {
+            this.players.push({
+                id,
+                balance: buyIn,
+                inactivity: 0,
+                playing: false,
+                leaving: false,
+                wager: this.options.minBet,
+                action: null,
+                insurenceBet: 0,
+                hand: null,
+                seat: Array.from({ length: this.options.maxPlayers }, (_, i) => i).find(seat => !this.players.some(p => p.seat == seat))!
+            });
+        });
 
-        if (this.players.length == 1) {
-            await this.advance('new');
+        // start the game if there are enough players
+        if (this.state.phase == 'waiting' && this.players.length >= 1) {
+            await this.start();
         }
 
         return 'join';
     }
 
-    async leave(id: string): Promise<'invalid' | 'leaving' | 'left'> {
+    // called when a player leaves the table
+    async leave(id: string): Promise<'inapplicable' | 'leaving' | 'left'> {
+        // check if the player is in the game
         const player = this.players.find(p => p.id === id);
-        if (!player) return 'invalid';
+        if (!player) return 'inapplicable';
 
+        // check if the player is already leaving
         if (player.leaving) return 'leaving';
 
+        // check if the game is waiting
         if (this.state.phase == 'waiting') {
-            this.players = this.players.filter(p => p.id !== id);
-            await this.update();
+            // pay out the player's balance
+            await client.account(id, account => {
+                account.balance += player.balance;
+            });
+
+            // remove the player from the table
+            await this.update(() => {
+                this.players = this.players.filter(p => p.id !== id);
+            });
+
             return 'left';
         }
 
-        player.leaving = true;
-        await this.update();
+        await this.update(() => {
+            player.leaving = true;
+        });
+
         return 'leaving';
     }
 
+    // called to start a new round
+    async start() {
+        this.log('Starting new round');
+
+        // pay out leaving players
+        for (const player of this.players) {
+            if (player.leaving) {
+                await client.account(player.id, account => {
+                    account.balance += player.balance;
+                });
+            }
+        }
+
+        // remove leaving players
+        await this.update(() => {
+            this.players = this.players.filter(p => !p.leaving);
+        });
+
+        // start dealing if there are enough players
+        if (this.players.length == 0) {
+            await this.update(() => {
+                this.state.phase = 'waiting';
+            });
+        }
+        else {
+            await this.deal();
+        }
+    }
+
+    // called to deal cards to players and dealer
+    async deal() {
+        this.log('Dealing out cards');
+
+        this.state.phase = 'dealing';
+
+        if (this.cards.length < 52) {
+            await this.update(() => {
+                this.cards = this.shuffle();
+            });
+        }
+
+        await this.update(() => {
+            if (this.state.phase != 'dealing') return;
+
+            // reset player hands
+            for (const player of this.players) {
+                player.playing = true;
+
+                player.hand = {
+                    id: 0,
+                    split: false,
+                    doubled: false,
+                    cards: [this.cards.pop()!, this.cards.pop()!]
+                };
+            }
+
+            // reset dealer hand
+            this.state.dealerHand = [this.cards.pop()!, this.cards.pop()!];
+
+            // set the first player as the active player
+            const first = this.players.sort((a, b) => a.seat - b.seat)[0];
+            this.state.currentTurn = first.id;
+            this.state.currentHand = 0;
+        });
+
+        // TODO: send the initial hands to channel
+
+        // start the first player's turn
+        await this.turn();
+    }
+
+    // called to process a turn
+    async turn() {
+        this.stopTimer();
+
+        if (this.state.phase != 'waiting' && this.state.currentTurn == 'dealer') this.dealer();
+
+        this.log('Waiting for player action');
+
+        // TODO: send the current player's interaction menu to channel
+
+        // start the player's turn
+        this.restartTimer();
+    }
+
+    // called on the dealer's turn
+    async dealer() {
+        this.log('Processing dealer turn');
+
+        if (this.state.phase == 'waiting') return;
+
+        // TODO: send the dealer's revealed hand to the channel
+
+        while (this.sum(this.state.dealerHand) < 17) {
+            await this.update(() => {
+                if (this.state.phase == 'waiting') return;
+                this.state.dealerHand.push(this.cards.pop()!);
+            });
+
+            // TODO: send the dealer's updated hand to the channel
+        }
+
+        await this.payout();
+    }
+
+    // called when the round ends
+    async payout() {
+        this.log('Paying out');
+
+        this.state.phase = 'payout';
+
+        await this.update(() => {
+            if (this.state.phase != 'payout') return;
+
+            // calculate the dealer's hand
+            const dealer = this.sum(this.state.dealerHand);
+
+            // calculate the payout for each player
+            for (const player of this.players) {
+                if (!player.hand || !player.playing) continue;
+
+                const calculate = (hand: Hand): number => {
+                    if (hand.split) return calculate(hand.subhands[0]) + calculate(hand.subhands[1]);
+
+                    const sum = this.sum(hand.cards);
+                    if (sum > 21) return 0;
+                    if (dealer > 21 || sum > dealer) return hand.doubled ? player.wager * 2 : player.wager;
+                    if (sum < dealer) return -player.wager;
+                    return 0;
+                }
+
+                player.balance += calculate(player.hand);
+            }
+        });
+
+        // TODO: send the payout results to the channel
+
+        await this.start();
+    }
+
+    // called when a player stands
     async stand() {
         console.log('Action: stand');
 
-        const player = this.activePlayer;
-        if (!player || !player.hand) return;
-
-        await this.advance('next');
+        await this.advance();
     }
 
-    async hit() {
+    // called when a player hits
+    async hit(): Promise<'success' | 'bust' | 'blackjack' | 'error'> {
         console.log('Action: hit');
 
         const player = this.activePlayer;
-        if (!player || !player.hand) return;
+        if (!player || !player.hand) return 'error';
 
         const hand = this.activeHand;
-        if (!hand || hand.split) return;
+        if (!hand || hand.split) return 'error';
 
-        hand.cards.push(this.cards.pop()!);
-        if (this.sum(hand.cards) > 21) {
-            hand.busted = true;
-            await this.advance('next');
+        this.update(() => {
+            hand.cards.push(this.cards.pop()!);
+        });
+
+        const sum = this.sum(hand.cards);
+
+        if (sum > 21) {
+            await this.advance();
+            return 'bust';
         }
 
-        await this.update();
+        if (sum == 21) {
+            await this.advance();
+            return 'blackjack';
+        }
+
+        this.turn();
+        return 'success';
     }
 
-    async deal() {
-        console.log('Dealing cards');
-
-        this.state.phase = 'dealing';
-        if (this.state.phase != 'dealing') return;
-
-        if (this.cards.length < 52) {
-            console.log('Shuffling cards');
-            this.cards = this.shuffle();
-        }
-
-        for (const player of this.players) {
-            player.playing = true;
-
-            player.hand = {
-                id: 0,
-                split: false,
-                doubled: false,
-                busted: false,
-                cards: [this.cards.pop()!, this.cards.pop()!]
-            };
-        }
-
-        this.state.dealerHand = [this.cards.pop()!, this.cards.pop()!];
-
-        // set the first player as the active player
-        const first = this.players.sort((a, b) => a.seatNumber - b.seatNumber)[0];
-        this.state.currentTurn = first.id;
-        this.state.currentHand = 0;
-
-        await this.update();
-        this.resetTimer();
-    }
-
-    async payout() {
-        console.log('Paying out');
-        
-        this.state.phase = 'payout';
-        if (this.state.phase != 'payout') return;
-
-        const dealerSum = this.sum(this.state.dealerHand);
-        for (const player of this.players) {
-            if (!player.hand || !player.playing) continue;
-
-            const calculate = (hand: Hand): number => {
-                if (hand.split) return calculate(hand.subhands[0]) + calculate(hand.subhands[1]);
-
-                const sum = this.sum(hand.cards);
-                if (sum > 21) return 0;
-                if (dealerSum > 21 || sum > dealerSum) return player.wager;
-                if (sum < dealerSum) return -player.wager;
-                return 0;
-            }
-
-            player.balance += calculate(player.hand);
-        }
-
-        await this.update();
-
-        await this.advance('new');
-    }
-
-    async advance(to: 'same' | 'next' | 'skip' | 'new') {
-        console.log('Advancing turn to:', to);
-
-        if (to == 'new') {
-            // pay out leaving players
-            for (const player of this.players) {
-                if (player.leaving) {
-                    const account = await client.account(player.id);
-                    account.balance += player.balance;
-                    await client.setAccount(player.id, account);
-                }
-            }
-
-            // remove leaving players
-            this.players = this.players.filter(p => !p.leaving);
-
-            // check if there are any players left
-            if (this.players.length == 0) {
-                this.state.phase = 'waiting';
-                await this.update();
-                return;
-            }
-
-            await this.update();
-
-            await this.deal();
-            return;
-        }
+    // called to advance the turn
+    async advance(skipAllHands?: true) {
+        this.log('Advancing turn');
 
         const state = this.state;
         if (state.phase == 'waiting') return;
@@ -288,69 +391,50 @@ export class BlackjackTable implements BlackjackTableData {
         const player = this.activePlayer;
         if (!player) return;
 
-        if (to == 'same') {
-            await this.update();
-            this.resetTimer();
-            return;
-        }
-        
-        if (state.currentHand < this.numHands - 1 && to != 'skip') {
-            state.currentHand++;
-        }
-        else {
-            const next = this.players.sort((a, b) => a.seatNumber - b.seatNumber).find(p => p.seatNumber > player.seatNumber);
-            if (!next) {
-                state.currentTurn = 'dealer';
-                this.dealerTurn();
+        await this.update(() => {
+            if (state.currentHand < this.numHands - 1 && !skipAllHands) {
+                state.currentHand++;
             }
             else {
-                state.currentTurn = next.id;
+                const next = this.players.sort((a, b) => a.seat - b.seat).find(p => p.seat > player.seat);
+                state.currentTurn = next ? next.id : 'dealer';
+                state.currentHand = 0;
             }
+        });
 
-            state.currentHand = 0;
-        }
-
-        await this.update();
-        this.resetTimer();
-    }
-
-    async dealerTurn() {
-        console.log('Processing dealer turn');
-
-        const state = this.state;
-        if (state.phase == 'waiting') return;
-
-        while (this.sum(state.dealerHand) < 17) {
-            state.dealerHand.push(this.cards.pop()!);
-        }
-        
-        await this.update();
-        
-        await this.payout();
+        await this.turn();
     }
 
     // Timer functions
-    resetTimer() {
-        if (this.timeout) clearTimeout(this.timeout);
-        if (this.state.phase != 'waiting') this.timeout = setTimeout(() => this.handleTimerEnd(), this.turnDuration * 1_000);
-    }
+    startTimer() {
+        if (this.state.phase == 'waiting') return;
 
-    async handleTimerEnd() {
-        console.log('Handling timer end');
+        this.timeout = setTimeout(async () => {
+            const player = this.activePlayer;
+            if (!player) return;
 
-        const player = this.activePlayer;
-        if (player) {
             player.inactivity++;
             if (player.inactivity >= 3) {
                 player.leaving = true;
             }
-        }
 
-        await this.advance('skip');
+            await this.advance(true);
+        }, this.turnDuration * 1_000);
+    }
+
+    stopTimer() {
+        if (this.timeout) clearTimeout(this.timeout);
+    }
+
+    restartTimer() {
+        this.stopTimer();
+        this.startTimer();
     }
 
     // Interaction functions
-    async update() {
+    async update(fn?: () => Promise<void> | void) {
+        await fn?.();
+
         await client.db.table('tables').set<BlackjackTableData>(this.id, {
             game: this.game,
             id: this.id,
@@ -392,5 +476,9 @@ export class BlackjackTable implements BlackjackTableData {
             if (rank === 'ace') return acc + 11 > 21 ? acc + 1 : acc + 11;
             return acc + parseInt(rank);
         }, 0);
+    }
+
+    log(message: string) {
+        console.log(`[${this.id.substring(0, 6)}] ${message}`);
     }
 }

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "discord.js";
-import { Account, Command, TableData } from "../structures.js";
+import { Command } from "../structures.js";
 import { info } from "../embeds/info.js";
 import { client } from "../client.js";
 
@@ -53,45 +53,40 @@ const command: Command = {
             case 'join':
                 const account = await client.account(member.id);
                 const buyin = table.game == "texasholdem" ? table.options.buyIn : Math.max(interaction.options.getInteger('buyin') ?? account.balance, table.options.maxBet);
-
-                if (account.balance < buyin) {
-                    await interaction.reply({ content: 'You do not have enough money to join the table.', ephemeral: true });
-                    return;
-                }
                 
                 const joinResult = await table.join(member.id, buyin);
 
-                if (joinResult == 'extant') {
-                    await interaction.reply({ content: 'You have already joined the table.', ephemeral: true });
-                }
-                else if (joinResult == 'full') {
-                    await interaction.reply({ content: 'The table is full.', ephemeral: true });
-                }
-                else if (joinResult == 'rejoin') {
-                    await interaction.reply({ content: 'You have rejoined the table.', ephemeral: true });
-                }
-                else {
-                    account.balance -= buyin;
-                    await client.setAccount(member.id, account);
-                    await interaction.reply({ content: 'You have joined the table.', ephemeral: true });                break;
+                switch (joinResult) {
+                    case 'extant':
+                        await interaction.reply({ content: 'You have already joined the table.', ephemeral: true });
+                        break;
+                    case 'full':
+                        await interaction.reply({ content: 'The table is full.', ephemeral: true });
+                        break;
+                    case 'rejoin':
+                        await interaction.reply({ content: 'You have rejoined the table.', ephemeral: true });
+                        break;
+                    case 'insufficient':
+                        await interaction.reply({ content: 'You do not have enough money to buy in.', ephemeral: true });
+                        break;
+                    default:
+                        await interaction.reply({ content: 'You have joined the table.', ephemeral: true });
+                        break;
                 }
                 break;
             case 'leave':
                 const leaveResult = await table.leave(member.id);
-                
-                if (leaveResult == 'invalid') {
-                    await interaction.reply({ content: 'You are not in the table.', ephemeral: true });
-                }
-                else if (leaveResult == 'leaving') {
-                    await interaction.reply({ content: 'You are set to leave the table before next round.', ephemeral: true });
-                }
-                else {
-                    const balance = table.players.find(p => p.id == member.id)?.balance ?? 0;
 
-                    const account = await client.account(member.id);
-                    account.balance += balance;
-                    await client.setAccount(member.id, account);
-                    await interaction.reply({ content: 'You have left the table.', ephemeral: true });
+                switch (leaveResult) {
+                    case 'invalid':
+                        await interaction.reply({ content: 'You are not in the table.', ephemeral: true });
+                        break;
+                    case 'leaving':
+                        await interaction.reply({ content: 'You are set to leave the table before next round.', ephemeral: true });
+                        break;
+                    default:
+                        await interaction.reply({ content: 'You have left the table.', ephemeral: true });
+                        break;
                 }
                 break;
         }

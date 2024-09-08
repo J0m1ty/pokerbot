@@ -14,7 +14,7 @@ export type BasePlayer = {
     inactivity: number;
     playing: boolean;
     leaving: boolean;
-    seatNumber: number;
+    seat: number;
 }
 
 export interface BaseTable {

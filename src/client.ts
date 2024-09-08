@@ -36,14 +36,14 @@ export class Client extends BaseClient {
         return { name: 'image.png', attachment: await canvas.toBuffer('png', { density: 2 }) };
     }
 
-    // Grabs a user's account from the database
-    async account(id: string) {
-        return await this.db.table('economy').get<Account>(id) ?? { claimed: 0, streak: 0, balance: 1_000 };
-    }
-
-    // Sets a user's account in the database
-    async setAccount(id: string, account: Account) {
-        await this.db.table('economy').set<Account>(id, account);
+    // Utility function to modify an account in the economy database
+    async account(id: string, fn?: (account: Account) => void) {
+        const account = await this.db.table('economy').get<Account>(id) ?? { claimed: 0, streak: 0, balance: 1_000 };
+        
+        if (!fn) return account;
+        
+        fn(account);
+        return await this.db.table('economy').set<Account>(id, account);
     }
 
     // Grabs the bot's guild in a safe manner

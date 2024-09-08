@@ -1,8 +1,6 @@
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
-import { Command, TableData } from "../structures.js";
+import { SlashCommandBuilder } from "discord.js";
+import { Command } from "../structures.js";
 import { client } from "../client.js";
-import { Canvas, loadImage } from "skia-canvas";
-import { BlackjackPlayer } from "../blackjack.js";
 
 const command: Command = {
     scope: 'guild',

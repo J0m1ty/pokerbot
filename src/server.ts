@@ -42,7 +42,7 @@ app.get('/verify', async (req, res) => {
 });
 
 // Creates and starts the web server
-export const server = () => {
+export const server = async () => {
     const port = 4040;
 
     return new Promise<void>(resolve => {
