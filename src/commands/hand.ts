@@ -1,10 +1,8 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
-import { Command, Table } from "../structures.js";
+import { Command, TableData } from "../structures.js";
 import { client } from "../client.js";
-import { Image, loadImage } from "skia-canvas";
-import { Blob } from "buffer";
-import { readFile } from "fs/promises";
-import { URL } from "url";
+import { Canvas, loadImage } from "skia-canvas";
+import { BlackjackPlayer } from "../blackjack.js";
 
 const command: Command = {
     scope: 'guild',
@@ -15,7 +13,7 @@ const command: Command = {
         const channel = await client.channel(interaction.channelId);
         if (!channel) return;
 
-        const table = await client.db.table('tables').get<Table>(channel.id);
+        const table = client.tables.get(channel.id);
         if (!table) {
             await interaction.reply({ content: 'No table has been registered to this channel.', ephemeral: true }).catch(() => { });
             return;
@@ -30,25 +28,41 @@ const command: Command = {
             return;
         }
 
-        const image = player.hand ? await client.canvas(1000, 726, async ({ ctx, width, height }) => {
-            const first = await loadImage(`./assets/cards/${player.hand![0]}.png`);
-            const second = await loadImage(`./assets/cards/${player.hand![1]}.png`);
+        await interaction.reply({ content: `Your hand: ${JSON.stringify(player.hand)}`, ephemeral: true }).catch(() => { });
 
-            ctx.drawImage(first, 0, 0, 500 - 25, 726);
-            ctx.drawImage(second, 500 + 25, 0, 500 - 25, 726);
-        }) : null;
+        // if ('split' in player.hand && player.hand.split) {
+        //     await interaction.reply({ content: 'You have split hands; WIP.', ephemeral: true }).catch(() => { });
+        //     return;
+        // }
 
-        const embed = new EmbedBuilder()
-            .setColor(Number(process.env.COLOR))
-            .setTitle(`Your Hand`)
-            .setDescription(player.hand ? null : 'No cards')
-            .setImage(image ? 'attachment://image.png' : null);
+        // const image = await client.canvas(1000, 726, async ({ ctx, width, height }) => {
+        //     const hand = 'split' in player.hand! ? (player.hand.split ? [] : player.hand.cards) : player.hand!;
 
-        await interaction.reply({
-            embeds: [embed],
-            files: image ? [image] : [],
-            ephemeral: true
-        }).catch(() => { });
+        //     const cards = [ await loadImage(`./assets/cards/${hand[0]}.png`), await loadImage(`./assets/cards/${hand[1]}.png`) ];
+
+        //     const first = new Canvas(cards[0].width, cards[0].height);
+        //     const second = new Canvas(cards[1].width, cards[1].height);
+
+        //     const ctx1 = first.getContext('2d');
+        //     const ctx2 = second.getContext('2d');
+
+        //     ctx1.drawImage(cards[0], 0, 0);
+        //     ctx2.drawImage(cards[1], 0, 0);
+
+        //     ctx.drawCanvas(first, 0, 0, (width - 25) / 2, height);
+        //     ctx.drawCanvas(second, (width + 25) / 2, 0, (width - 25) / 2, height);
+        // });
+
+        // const embed = new EmbedBuilder()
+        //     .setColor(Number(process.env.COLOR))
+        //     .setTitle(`Your Hand`)
+        //     .setImage('attachment://image.png');
+
+        // await interaction.reply({
+        //     embeds: [embed],
+        //     files: [image],
+        //     ephemeral: true
+        // }).catch(() => { });
     }
 }
 

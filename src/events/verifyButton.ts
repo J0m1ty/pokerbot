@@ -1,4 +1,4 @@
-import { Event, Verification } from "../structures.js";
+import { Event, VerificationData } from "../structures.js";
 import { client } from "../client.js";
 
 const event: Event = {
@@ -7,7 +7,7 @@ const event: Event = {
         if (!interaction.isButton()) return;
         if (!interaction.customId.startsWith('verify-')) return;
 
-        const verification = await client.db.table('pending').get<Verification>(interaction.user.id);
+        const verification = await client.db.table('pending').get<VerificationData>(interaction.user.id);
         if (!verification || verification.step != "rules") return;
 
         if (interaction.customId != verification.buttonId) return;

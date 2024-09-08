@@ -1,4 +1,4 @@
-import { Event, Verification } from "../structures.js";
+import { Event, VerificationData } from "../structures.js";
 import { GuildMember } from "discord.js";
 import { randomBytes } from 'crypto';
 import { client } from "../client.js";
@@ -30,7 +30,7 @@ const event: Event = {
         const response = await member.send({ embeds: [ welcome(member.user.username) ] }).catch(() => {});
         if (!response) return;
 
-        client.db.table('pending').set<Verification>(member.id, { 
+        client.db.table('pending').set<VerificationData>(member.id, { 
             step: 'email', 
             email: '',
             token: randomBytes(32).toString('hex')

@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer } from "http";
 import { client } from "./client.js";
-import { Verification } from "./structures.js";
+import { VerificationData } from "./structures.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle,MessageActionRowComponentBuilder } from "discord.js";
 import { rules } from "./embeds/rules.js";
 
@@ -13,7 +13,7 @@ app.get('/verify', async (req, res) => {
     const token = req.query.token as string;
     if (!id || !token) return res.status(400).send('Bad Request');
 
-    const verification = await client.db.table('pending').get<Verification>(id);
+    const verification = await client.db.table('pending').get<VerificationData>(id);
     if (!verification || verification.step == "rules" || token !== verification.token) return res.status(400).send('Bad Request');
 
     const member = await client.member(id);
@@ -32,7 +32,7 @@ app.get('/verify', async (req, res) => {
     const response = await member.send({ embeds: [ rules() ], components: [ row ] }).catch(() => {});
     if (!response) return res.status(500).send('Internal Server Error');
 
-    await client.db.table('pending').set<Verification>(id, {
+    await client.db.table('pending').set<VerificationData>(id, {
         step: "rules", 
         email: verification.email,
         buttonId

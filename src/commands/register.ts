@@ -1,6 +1,8 @@
 import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
-import { Command, Table } from "../structures.js";
+import { Command, TableData } from "../structures.js";
 import { client } from "../client.js";
+import { BlackjackTable } from "../blackjack.js";
+import { TexasHoldemTable } from "../texasholdem.js";
 
 const command: Command = {
     scope: 'guild',
@@ -84,33 +86,31 @@ const command: Command = {
 
         const minBet = (game == "blackjack" ? interaction.options.getInteger('minbet') : interaction.options.getInteger('bigblind')) ?? 1;
 
-        await client.db.table('tables').set<Table>(channel.id, game == "blackjack" ? {
+        client.tables.set(channel.id, game == "blackjack" ? new BlackjackTable({
             id: channel.id,
-            game,
             stakes: minBet <= 10 ? 'low' : minBet <= 50 ? 'medium' : 'high',
             turnDuration: interaction.options.getInteger('duration') ?? 20,
             players: [],
-            state: {},
+            state: { phase: 'waiting' },
             options: {
-                decks: interaction.options.getInteger('decks') ?? 4,
+                numDecks: interaction.options.getInteger('decks') ?? 4,
                 maxPlayers: interaction.options.getInteger('maxplayers') ?? 7,
                 minBet: interaction.options.getInteger('minbet') ?? 1,
                 maxBet: interaction.options.getInteger('maxbet') ?? minBet * 25
             }
-        } : {
+        }) : new TexasHoldemTable({
             id: channel.id,
-            game,
             stakes: minBet <= 5 ? 'low' : minBet <= 20 ? 'medium' : 'high',
             turnDuration: interaction.options.getInteger('duration') ?? 20,
             players: [],
-            state: {},
+            state: { phase: 'waiting' },
             options: {
                 maxPlayers: interaction.options.getInteger('maxplayers') ?? 9,
                 smallBlind: interaction.options.getInteger('smallblind') ?? 1,
                 bigBlind: interaction.options.getInteger('bigblind') ?? minBet * 2,
                 buyIn: interaction.options.getInteger('buyin') ?? minBet * 50
             }
-        });
+        }));
 
         await interaction.reply({ content: 'Table registered successfully!', ephemeral: true }).catch(() => { });
     }
