@@ -1,13 +1,6 @@
 import { client } from "./client.js";
 import { BasePlayer, BaseTable, Card, ranks, suits } from "./poker.js";
 
-export type BlackjackAction = {
-    type: 'hit' | 'stand' | 'double' | 'split';
-} | {
-    type: 'insurance';
-    bet: number;
-}
-
 export type Hand = {
     id: number;
 } & ({
@@ -22,7 +15,7 @@ export type Hand = {
 
 export type BlackjackPlayer = BasePlayer & {
     wager: number;
-    action: BlackjackAction | null;
+    action: 'hit' | 'stand' | 'double' | 'split' | null;
     insurenceBet: number | null;
     hand: Hand | null;
 }
@@ -245,8 +238,8 @@ export class BlackjackTable implements BlackjackTableData {
             }
 
             if (player.leaving) {
-                // TODO: tell the player they are leaving and why
-                console.log(`Player ${player.id} is leaving because of ${player.leaving}`);
+                // FIXME
+                await this.send(`Player ${player.id} has left the table${player.leaving === 'insufficient' ? ' due to insufficient funds' : ''}`);
 
                 await client.account(player.id, account => {
                     account.balance += player.balance;
@@ -261,6 +254,7 @@ export class BlackjackTable implements BlackjackTableData {
 
         // start dealing if there are enough players
         if (this.players.length == 0) {
+            this.log('No players remaining - waiting for players');
             await this.update(() => {
                 this.state.phase = 'waiting';
             });
@@ -308,9 +302,9 @@ export class BlackjackTable implements BlackjackTableData {
             this.state.currentHand = 0;
         });
 
-        // TODO: send the initial hands to channel
-        console.log('Dealer:', (this.state as any).dealerHand[0], 'and a hidden card');
-        console.log('Players:', this.players.map(p => p.hand));
+        // FIXME
+        await this.send(`Dealer cards: ${(this.state as any).dealerHand[0]}, and a facedown card`);
+        await this.send(`Player hands: ${this.players.map(p => `[${p.id.substring(0, 5)}]` + ((!p.hand || p.hand.split) ? 'error' : p.hand.cards.join(', '))).join('\n')}`);
 
         // if first dealer card is an ace, prompt for insurance, otherwise continue with the first player's turn
         if (this.state.phase != 'waiting' && this.state.dealerHand[0].split('_')[0] === 'ace') {
@@ -329,8 +323,8 @@ export class BlackjackTable implements BlackjackTableData {
             this.state.phase = 'insurance';
         });
 
-        // TODO: send the insurance prompt to channel
-        console.log('Insurance prompt');
+        // FIXME
+        await this.send('Insurance prompt');
 
         // wait 15 seconds for players to take insurance
         await new Promise(resolve => setTimeout(resolve, this.turnDuration * 1_000));
@@ -340,11 +334,12 @@ export class BlackjackTable implements BlackjackTableData {
         const dealer = this.sum(this.state.dealerHand);
 
         // pay out insurance bets
+        const results: Record<string, 'won' | 'lost' | 'push'> = {};
         await this.update(async () => {
             for (const player of this.players) {
                 if (!player.insurenceBet || !player.hand) continue;
 
-                let result = '';
+                let result: 'won' | 'lost' | 'push';
                 if (dealer == 21 && (!player.hand.split && this.sum(player.hand.cards) == 21)) {
                     player.balance += player.insurenceBet;
                     result = 'push';
@@ -359,11 +354,12 @@ export class BlackjackTable implements BlackjackTableData {
                 }
 
                 player.insurenceBet = null;
-
-                // TODO: send the insurance results to channel
-                console.log(`Insurance result for ${player.id}: ${result}`);
+                results[player.id] = result;
             }
         });
+
+        // FIXME
+        await this.send(`Dealer ${dealer == 21 ? 'has' : 'does not have'} Blackjack. Insurance results: ${Object.entries(results).map(([id, result]) => `[${id.substring(0, 5)}] ${result}`).join('\n')}`);
 
         // continue with the first player's turn
         await this.turn();
@@ -382,10 +378,29 @@ export class BlackjackTable implements BlackjackTableData {
             return;
         }
 
-        this.log('Waiting for player action');
+        const active = this.activePlayer;
+        if (!active || !active.hand || !active.playing) {
+            await this.advance();
+            return;
+        }
 
-        // TODO: send the current player's interaction menu to channel
-        console.log('Player action prompt');
+        const hand = this.activeHand;
+        if (!hand || hand.split || hand.doubled) {
+            await this.advance();
+            return;
+        }
+
+        // check if the player has blackjack
+        if (this.sum(hand.cards) == 21) {
+            // FIXME
+            await this.send(`Player ${active.id} has Blackjack!`);
+
+            await this.advance();
+            return;
+        }
+
+        // FIXME
+        await this.send(`Player ${active.id}'s turn. Hand: ${hand.cards.join(', ')}`);
 
         // start the player's turn
         this.restartTimer();
@@ -397,18 +412,23 @@ export class BlackjackTable implements BlackjackTableData {
 
         if (this.state.phase == 'waiting') return;
 
-        // TODO: send the dealer's revealed hand to the channel
-        console.log('Dealer:', this.state.dealerHand);
+        // FIXME
+        await this.send(`Dealer cards: ${this.state.dealerHand.join(', ')}`);
 
         while (this.sum(this.state.dealerHand) < 17) {
             await this.update(() => {
                 if (this.state.phase == 'waiting') return;
                 this.state.dealerHand.push(this.cards.pop()!);
             });
+            
+            await new Promise(resolve => setTimeout(resolve, 1_000));
 
-            // TODO: send the dealer's updated hand to the channel
-            console.log('Dealer:', this.state.dealerHand);
+            // FIXME
+            await this.send(`Dealer cards: ${this.state.dealerHand.join(', ')}`);
         }
+
+        // FIXME
+        this.send(`Dealer ends with a total of ${this.sum(this.state.dealerHand)}`);
 
         await this.payout();
     }
@@ -419,6 +439,7 @@ export class BlackjackTable implements BlackjackTableData {
 
         this.state.phase = 'payout';
 
+        const result: Record<string, number> = {};
         await this.update(() => {
             if (this.state.phase != 'payout') return;
 
@@ -442,21 +463,23 @@ export class BlackjackTable implements BlackjackTableData {
                 const change = calculate(player.hand);
 
                 player.balance += change;
-
-                // TODO: send the payout results to the channel
-                console.log(`Result for ${player.id}: ${change > 0 ? 'won' : change < 0 ? 'lost' : 'push'}`);
+                result[player.id] = change;
             }
         });
+
+        // FIXME
+        await this.send(`Payout results: ${Object.entries(result).map(([id, change]) => `[${id.substring(0, 5)}] ${change > 0 ? '+' : ''}${change}`).join('\n')}`);
 
         await this.start();
     }
 
     // called when a player stands
-    async stand(id: string): Promise<'success' | 'error'> {
+    async stand(id: string): Promise<'success' | 'not_turn' | 'unavailable'> {
         this.log('Action: stand');
 
-        const player = this.activePlayer;
-        if (!player || !player.playing || player.id !== id) return 'error';
+        const active = this.activePlayer;
+        if (!active) return 'unavailable';
+        if (active.id !== id) return 'not_turn';
 
         await this.advance();
 
@@ -464,14 +487,15 @@ export class BlackjackTable implements BlackjackTableData {
     }
 
     // called when a player hits
-    async hit(id: string): Promise<'success' | 'bust' | 'blackjack' | 'error'> {
+    async hit(id: string): Promise<'success' | 'bust' | 'blackjack' | 'not_turn' | 'unavailable'> {
         this.log('Action: hit');
 
-        const player = this.activePlayer;
-        if (!player || !player.hand || player.id !== id) return 'error';
+        const active = this.activePlayer;
+        if (!active || !active.hand) return 'unavailable';
+        if (active.id !== id) return 'not_turn';
 
         const hand = this.activeHand;
-        if (!hand || hand.split || hand.doubled) return 'error';
+        if (!hand || hand.split || hand.doubled) return 'unavailable';
 
         this.update(() => {
             hand.cards.push(this.cards.pop()!);
@@ -494,20 +518,20 @@ export class BlackjackTable implements BlackjackTableData {
     }
 
     // called when a player doubles down
-    async double(id: string): Promise<'success' | 'extant' | 'insufficient' | 'error'> {
+    async double(id: string): Promise<'pre' | 'success' | 'went' | 'insufficient' | 'not_turn' | 'unavailable'> {
         this.log('Action: double');
 
-        const player = this.activePlayer;
-        if (!player || !player.hand || player.id !== id) return 'error';
+        const active = this.activePlayer;
+        if (!active || !active.hand) return 'unavailable';
+        if (active.id !== id) return 'not_turn';
 
         const hand = this.activeHand;
-        if (!hand || hand.split) return 'error';
-        if (hand.doubled) return 'extant';
+        if (!hand || hand.split || hand.doubled) return 'unavailable';
 
-        if (player.balance < player.wager) return 'insufficient';
+        if (active.balance < active.wager) return 'insufficient';
 
         await this.update(() => {
-            player.balance -= player.wager;
+            active.balance -= active.wager;
             hand.doubled = this.cards.pop()!;
         });
 
@@ -517,19 +541,20 @@ export class BlackjackTable implements BlackjackTableData {
     }
 
     // called when a player splits their hand
-    async split(id: string): Promise<'success' | 'insufficient' | 'error'> {
+    async split(id: string): Promise<'pre' | 'success' | 'went' | 'insufficient' | 'not_turn' | 'unavailable'> {
         this.log('Action: split');
 
-        const player = this.activePlayer;
-        if (!player || !player.hand || player.id !== id) return 'error';
+        const active = this.activePlayer;
+        if (!active || !active.hand) return 'unavailable';
+        if (active.id !== id) return 'not_turn';
 
         const hand = this.activeHand;
-        if (!hand || hand.split || (!hand.split && hand.doubled) || hand.cards[0].split('_')[0] !== hand.cards[1].split('_')[0]) return 'error';
+        if (!hand || hand.split || (!hand.split && hand.doubled) || hand.cards[0].split('_')[0] !== hand.cards[1].split('_')[0]) return 'unavailable';
 
-        if (player.balance < player.wager) return 'insufficient';
+        if (active.balance < active.wager) return 'insufficient';
 
         await this.update(() => {
-            player.balance -= player.wager;
+            active.balance -= active.wager;
 
             this.activeHand = {
                 id: hand.id,
@@ -554,11 +579,13 @@ export class BlackjackTable implements BlackjackTableData {
     }
 
     // called when a player takes insurance
-    async recieve(id: string, bet: number): Promise<'success' | 'extant' | 'insufficient' | 'error'> {
+    async recieve(id: string, bet: number): Promise<'success' | 'extant' | 'insufficient' | 'inapplicable' | 'error'> {
         this.log('Action: insurance');
 
-        const player = this.activePlayer;
-        if (!player || !player.hand || player.id !== id) return 'error';
+        if (this.state.phase != 'insurance') return 'inapplicable';
+
+        const player = this.players.find(p => p.id === id);
+        if (!player || !player.playing || !player.hand) return 'error';
 
         if (player.insurenceBet) return 'extant';
         if (player.balance < bet) return 'insufficient';
@@ -585,7 +612,7 @@ export class BlackjackTable implements BlackjackTableData {
                 state.currentHand++;
             }
             else {
-                const next = this.players.sort((a, b) => a.seat - b.seat).find(p => p.seat > player.seat);
+                const next = this.players.sort((a, b) => a.seat - b.seat).find(p => p.seat > player.seat && p.playing);
                 state.currentTurn = next ? next.id : 'dealer';
                 state.currentHand = 0;
             }
@@ -634,6 +661,13 @@ export class BlackjackTable implements BlackjackTableData {
             state: this.state,
             options: this.options
         });
+    }
+
+    async send(message: string) {
+        const channel = await client.channel(this.id);
+        if (!channel || !channel.isTextBased()) return;
+
+        await channel.send(message);
     }
 
     // Helper functions
