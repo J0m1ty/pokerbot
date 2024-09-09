@@ -1,40 +1,9 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
-import { Account, Command } from "../structures.js";
+import { Command } from "../structures.js";
 import { client } from "../client.js";
-import { CanvasRenderingContext2D, loadImage } from "skia-canvas";
+import { loadImage } from "skia-canvas";
 import { chips } from "../data/chips.js";
-import { clamp, map } from "../utils.js";
-
-// Helper functions for drawing a rectangle
-const rect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, fill: any) => {
-    ctx.beginPath();
-    ctx.rect(x, y, width, height);
-    ctx.fillStyle = fill;
-    ctx.fill();
-}
-
-// Helper function for drawing an ellipse
-const ellipse = (ctx: CanvasRenderingContext2D, x: number, y: number, radiusX: number, radiusY: number, fill?: any, stroke?: true) => {
-    ctx.beginPath();
-    ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
-    if (stroke) ctx.stroke();
-    if (fill) {
-        ctx.fillStyle = fill;
-        ctx.fill();
-    }
-}
-
-// Helper function for drawing a quad
-const quad = (ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, fill: any) => {
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.lineTo(x3, y3);
-    ctx.closePath();
-    ctx.fillStyle = fill;
-    ctx.fill();
-}
+import { clamp, ellipse, map, quad, rect } from "../utils.js";
 
 // Helper function for distributing an amount of money into chips of proper stacks
 const distribute = (amount: number) => {
@@ -62,8 +31,7 @@ const command: Command = {
     scope: 'global',
     data: new SlashCommandBuilder()
         .setName('balance')
-        .setDescription('View your account balance')
-        .addBooleanOption(option => option.setName('private').setDescription('Whether to show the balance privately').setRequired(false)),
+        .setDescription('View your account balance'),
     async execute(interaction) {
         const member = await client.member(interaction.user.id);
         if (!member) return;
@@ -73,19 +41,17 @@ const command: Command = {
         const stacks = distribute(account.balance);
 
         const image = await client.canvas(600, 200, async ({ ctx, width, height }) => {
-            rect(ctx, 0, 0, width, height, `#${process.env.COLOR?.replace('0x', '')}`);
-
             const tx = width / 2, ty = height * 0.65, scale = clamp(map(stacks.length, 1, 16, 2, 1), 1, 1.5);
 
             quad(ctx, tx - 280, ty, tx + 280, ty, tx + 280 - 25, height, tx - 280 + 25, height, '#5C4033');
 
-            ellipse(ctx, tx, ty - 5, 280, 90, '#17e605');
+            ellipse(ctx, tx, ty - 5, 280, 90, '#214b2d');
 
-            ellipse(ctx, tx, ty + 5, 280, 90, '#134f12');
+            ellipse(ctx, tx, ty + 5, 280, 90, '#173620');
 
             const gradient = ctx.createRadialGradient(tx, ty, 0, tx, ty, 280);
-            gradient.addColorStop(0, '#2ce31b');
-            gradient.addColorStop(1, '#34b514');
+            gradient.addColorStop(0, '#286842');
+            gradient.addColorStop(1, '#214b2d');
 
             ellipse(ctx, tx, ty, 280, 90, gradient);
 
@@ -158,23 +124,24 @@ const command: Command = {
 
             const image = await loadImage('./assets/chips/white_chip.png');
 
-            ctx.drawImage(image, 10, 10, 30, 30);
+            ctx.drawImage(image, width - 40, 10, 30, 30);
             ctx.font = 'bold 24px Arial';
-            ctx.textAlign = 'left';
+            ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = 'white';
-            ctx.fillText(`$${account.balance.toLocaleString()}`, 45, 24);
+            ctx.fillText(`$${account.balance.toLocaleString()}`, width - 45, 24);
+
+            ctx.textAlign = 'left';
+            ctx.fillText(`${member.user.displayName}`, 10, 24);
         });
 
         const embed = new EmbedBuilder()
             .setColor(Number(process.env.COLOR))
-            .setTitle(`${interaction.user.displayName}'s Chips`)
             .setImage('attachment://image.png');
 
         await interaction.reply({
             embeds: [embed],
-            files: [image],
-            ephemeral: interaction.options.getBoolean('private') ?? true
+            files: [image]
         }).catch(() => { });
     }
 }
